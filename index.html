@@ -2,9 +2,9 @@
 <html lang="ru" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light dark">
-  <title>EyeCare Monitor — Интерактивный мониторинг усталости глаз</title>
+  <title>EyeCare Monitor — Desktop Eye Fatigue Monitor & Research Suite (v0.6+)</title>
   <style>
     :root {
       --bg: #F4F2EC;
@@ -56,7 +56,7 @@
       font-family: var(--font-sans);
       font-size: 15px; line-height: 1.5;
       -webkit-font-smoothing: antialiased;
-      min-height: 100dvh;
+      min-height: 100vh;
       transition: background var(--trans), color var(--trans);
     }
     @media (prefers-reduced-motion: reduce) {
@@ -71,10 +71,10 @@
 
     .app-shell {
       max-width: 1120px; margin: 0 auto;
-      padding: 12px 14px calc(32px + env(safe-area-inset-bottom, 0px));
+      padding: 14px 16px 32px;
     }
 
-    /* Compact Header */
+    /* Header */
     .topbar {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
       gap: 10px; padding: 10px 14px;
@@ -92,7 +92,7 @@
     .brand-sub { font-size: 12px; color: var(--text-muted); }
     .topbar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
-    /* Buttons & Form Controls */
+    /* Controls */
     button, select, input { font-family: inherit; font-size: 14px; color: var(--text); }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -139,7 +139,7 @@
     .banner.err { background: var(--coral-bg); border-color: var(--coral); }
     .banner.ok { background: var(--sage-bg); border-color: var(--sage); }
 
-    /* HERO STAGE: Live Webcam + Metrics Side-by-Side */
+    /* HERO GRID: Live Webcam + 3 One-Glance Cards */
     .hero-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr);
@@ -157,13 +157,13 @@
     .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .card-title { font-size: 12.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
 
-    /* Interactive Webcam Stage for Jury & Users */
+    /* Interactive AR Webcam Stage */
     .cam-card { padding: 12px; gap: 10px; }
     .cam-stage {
       position: relative;
       width: 100%;
       aspect-ratio: 4 / 3;
-      min-height: 250px;
+      min-height: 260px;
       max-height: 440px;
       border-radius: 12px;
       overflow: hidden;
@@ -175,7 +175,7 @@
     .cam-stage.zone-yellow { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(142, 91, 19, 0.22); }
     .cam-stage.zone-red { border-color: var(--coral); box-shadow: 0 0 0 4px rgba(163, 59, 46, 0.28); }
     .cam-stage.collapsed {
-      /* Never display:none so browser keeps decoding frames! */
+      /* NEVER display:none so desktop browser keeps decoding webcam frames */
       position: fixed; bottom: 0; right: 0;
       width: 2px; height: 2px; min-height: 2px; opacity: 0.001;
       pointer-events: none; z-index: -1; border: none;
@@ -193,7 +193,6 @@
       pointer-events: none;
       display: block;
     }
-    /* Start / Auto-Calibration Overlay inside Camera Stage */
     .cam-overlay-center {
       position: absolute; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -204,19 +203,15 @@
     }
     .cam-overlay-center.hidden { display: none; }
     .cam-overlay-center h2 { margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF; }
-    .cam-overlay-center p { margin: 0; max-width: 380px; font-size: 13.5px; color: #D2DDD9; }
+    .cam-overlay-center p { margin: 0; max-width: 390px; font-size: 13.5px; color: #D2DDD9; }
 
-    /* Live HUD Pills on top of Camera */
-    .cam-hud-top {
-      position: absolute; top: 10px; left: 10px; right: 10px;
+    .cam-hud-top, .cam-hud-bottom {
+      position: absolute; left: 10px; right: 10px;
       display: flex; justify-content: space-between; align-items: center; gap: 6px;
       pointer-events: none; z-index: 3; flex-wrap: wrap;
     }
-    .cam-hud-bottom {
-      position: absolute; bottom: 10px; left: 10px; right: 10px;
-      display: flex; justify-content: space-between; align-items: center; gap: 6px;
-      pointer-events: none; z-index: 3; flex-wrap: wrap;
-    }
+    .cam-hud-top { top: 10px; }
+    .cam-hud-bottom { bottom: 10px; }
     .hud-pill {
       padding: 4px 10px; border-radius: 999px;
       background: rgba(16, 22, 26, 0.72);
@@ -228,7 +223,6 @@
     .hud-pill.yellow { border-color: #E5B263; color: #F9D99B; }
     .hud-pill.red { border-color: #EB8577; color: #FFC1B8; }
 
-    /* Auto-calibration banner inside camera */
     .calib-strip {
       position: absolute; left: 12px; right: 12px; bottom: 48px; z-index: 5;
       padding: 10px 14px; border-radius: 10px;
@@ -238,19 +232,16 @@
     }
     .calib-strip.show { display: block; }
 
-    .cam-actions {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
-    }
+    .cam-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
     .cam-actions-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 
-    /* Right column stacked metric cards */
+    /* Right column metrics */
     .metrics-stack { display: flex; flex-direction: column; gap: 12px; }
     .metric-big { font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
     .metric-sub { font-size: 12.5px; color: var(--text-muted); }
     .gauge-wrap { display: flex; align-items: center; gap: 12px; }
     .sparkline-svg { width: 100%; height: 36px; display: block; }
 
-    /* Traffic-light distance bar */
     .zone-bar {
       position: relative; height: 10px; border-radius: 999px; overflow: hidden;
       display: flex; background: var(--surface-2); margin: 2px 0;
@@ -271,7 +262,7 @@
       margin-bottom: 14px;
     }
 
-    /* Hidden Researcher Suite (revealed only via flask button or ?researcher=1) */
+    /* Collapsible Researcher Drawer (S1–S4) */
     .research-drawer { display: none; margin-top: 14px; }
     .research-drawer.open { display: block; }
     .subtabs {
@@ -288,7 +279,7 @@
     .subpanel.active { display: block; }
 
     .cards-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
-    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; }
     @media (max-width: 720px) { .cards-2 { grid-template-columns: 1fr; } }
 
     /* Tables */
@@ -298,7 +289,7 @@
     th { background: var(--surface-2); font-weight: 700; color: var(--text-muted); white-space: nowrap; }
     tr:last-child td { border-bottom: none; }
 
-    /* Modals & Overlays */
+    /* Modals */
     .overlay {
       position: fixed; inset: 0; z-index: 1000;
       background: rgba(19, 24, 28, 0.72);
@@ -308,7 +299,7 @@
     }
     .overlay.open { display: flex; }
     .modal {
-      width: 100%; max-width: 540px; max-height: 92dvh; overflow-y: auto;
+      width: 100%; max-width: 540px; max-height: 92vh; overflow-y: auto;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.3);
     }
@@ -316,10 +307,7 @@
     .modal h2 { margin: 0 0 8px; font-size: 18.5px; }
     .modal-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 
-    .exercise-stage {
-      background: var(--surface-2); border-radius: var(--radius);
-      padding: 18px; text-align: center; margin: 12px 0;
-    }
+    .exercise-stage { background: var(--surface-2); border-radius: var(--radius); padding: 18px; text-align: center; margin: 12px 0; }
     .comfort-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
     .comfort-btn {
       width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
@@ -327,7 +315,6 @@
     }
     .comfort-btn.selected { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
 
-    /* Questionnaires */
     .q-item { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; background: var(--bg); }
     .q-item-title { font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
     .q-options { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -337,7 +324,7 @@
       background: var(--surface); font-size: 12.5px; cursor: pointer;
     }
 
-    /* Floating Mini-Widget fallback */
+    /* Floating Mini-Widget fallback (Firefox / Safari) */
     .mini-widget {
       position: fixed; right: 14px; bottom: 14px; z-index: 900;
       width: 268px; padding: 10px 12px;
@@ -367,18 +354,13 @@
       font-size: 12px; color: var(--text-muted);
       display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
     }
-    @media (max-width: 480px) {
-      .app-shell { padding: 8px 8px calc(24px + env(safe-area-inset-bottom, 0px)); }
-      .metric-big { font-size: 26px; }
-      .cam-stage { min-height: 220px; }
-    }
   </style>
 </head>
 <body>
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
   <div class="app-shell">
-    <!-- ==================== SIMPLE TOP BAR ==================== -->
+    <!-- ==================== HEADER ==================== -->
     <header class="topbar">
       <div class="brand">
         <div class="brand-logo" aria-hidden="true">
@@ -388,8 +370,8 @@
           </svg>
         </div>
         <div>
-          <h1>EyeCare Monitor <span class="badge sage" id="syncBadge">Локально</span></h1>
-          <div class="brand-sub" data-i18n="subtitle">Интерактивная профилактика усталости глаз · 100% на устройстве</div>
+          <h1>EyeCare Monitor <span class="badge sage" id="syncBadge">Автоотправка</span></h1>
+          <div class="brand-sub" data-i18n="subtitle">Мониторинг усталости глаз для ноутбуков и ПК · v0.6+ (без записи видео)</div>
         </div>
       </div>
 
@@ -402,24 +384,24 @@
         </select>
         <button class="btn btn-sm" id="themeToggleBtn" type="button" aria-label="Toggle theme">🌙</button>
         <button class="btn btn-sm" id="pipBtn" type="button" data-i18n="miniWidget">Мини-окно</button>
-        <button class="btn btn-sm" id="researchToggleBtn" type="button" title="Панель исследователя (S1–S6)">🔬 S1–S6</button>
+        <button class="btn btn-sm" id="researchToggleBtn" type="button" title="Панель исследователя (S1–S4)">🔬 S1–S4</button>
       </div>
     </header>
 
-    <!-- Diagnostics Banner (shown only on real issues: HTTP instead of HTTPS, WebView, etc.) -->
+    <!-- Diagnostics Banner -->
     <div id="diagBanner" class="banner warn" style="display:none;" role="alert">
       <div id="diagBannerText"></div>
       <button class="btn btn-sm" id="diagBannerClose" type="button">✕</button>
     </div>
 
-    <!-- Silent Control Mode Banner (S5 Control Arm) -->
+    <!-- Silent Control Mode Banner (Study S3 Control Arm) -->
     <div id="silentBanner" class="banner ok" style="display:none;">
-      <div data-i18n="silentNotice">Активен фоновый сбор данных (тихий режим). По завершении работы нажмите «Завершить и отправить».</div>
+      <div data-i18n="silentNotice">Активен тихий контрольный режим (S3 Silent Mode): оповещения и упражнения отключены, ведётся только фоновая запись метрик.</div>
     </div>
 
-    <!-- Demo Presets Bar (only when Demo Mode is active — great for Jury demonstration!) -->
+    <!-- Demo Presets Bar (6 deterministic presets) -->
     <div class="demo-bar" id="demoBar" style="display:none;">
-      <strong style="font-size:13px;" data-i18n="demoPresetsLabel">Демо для жюри (симуляция):</strong>
+      <strong style="font-size:13px;" data-i18n="demoPresetsLabel">Демо-режим (симуляция):</strong>
       <button class="btn btn-sm" data-demo="normal" type="button" data-i18n="demoNormal">Норма (62 см)</button>
       <button class="btn btn-sm btn-amber" data-demo="yellow" type="button" data-i18n="demoYellow">Жёлтая (40 см)</button>
       <button class="btn btn-sm btn-danger" data-demo="red" type="button" data-i18n="demoRed">Красная (24 см)</button>
@@ -428,14 +410,15 @@
       <button class="btn btn-sm" data-demo="away" type="button" data-i18n="demoAway">Уход (AWAY)</button>
     </div>
 
-    <!-- ==================== HERO: LIVE WEBCAM + 3 SIMPLE METRIC CARDS ==================== -->
+    <!-- ==================== HERO: LIVE AR WEBCAM + 3 ONE-GLANCE METRIC CARDS ==================== -->
     <main class="hero-grid">
-      <!-- LEFT: LIVE INTERACTIVE WEBCAM STAGE WITH AR LANDMARK HUD -->
+      <!-- LEFT: LIVE AR WEBCAM STAGE -->
       <section class="card cam-card">
         <div class="card-header">
           <h2 class="card-title" data-i18n="liveCameraTitle">Веб-камера в реальном времени (AR-трекинг глаз)</h2>
           <div style="display:flex;gap:6px;align-items:center;">
             <span class="badge tabular" id="fpsBadge">0 FPS</span>
+            <span class="badge" id="lumaBadge" title="Ambient luminance">Luma: —</span>
             <span class="badge" id="presenceBadge">Ожидание</span>
           </div>
         </div>
@@ -444,7 +427,6 @@
           <video id="camVideo" autoplay playsinline muted></video>
           <canvas id="arCanvas"></canvas>
 
-          <!-- Live HUD pills overlaid on webcam -->
           <div class="cam-hud-top">
             <span class="hud-pill tabular" id="hudDistPill">Дистанция: — см</span>
             <span class="hud-pill tabular" id="hudBlinkPill">Моргания: —/мин · EAR —</span>
@@ -454,17 +436,15 @@
             <span class="hud-pill tabular" id="hudIrisPill">Радужка: — px</span>
           </div>
 
-          <!-- Automatic 3-second Calibration Banner -->
-          <div class="calib-strip" id="calibStrip">Автокалибровка: сядьте на ~60 см от экрана и смотрите прямо... 3</div>
+          <div class="calib-strip" id="calibStrip">Автокалибровка (~60 см): смотрите прямо на экран... 3</div>
 
-          <!-- Initial 1-Click Start Overlay (disappears immediately when camera starts) -->
           <div class="cam-overlay-center" id="camStartOverlay">
             <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#6BB39B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
             <h2 data-i18n="heroHeadline">Нажмите «Начать» — всё остальное сделает программа</h2>
-            <p data-i18n="heroDesc">Автокалибровка за 3 секунды, живой трекинг радужки и морганий, автоматический подбор упражнений и автоотправка сводки.</p>
+            <p data-i18n="heroDesc">Автокалибровка за 3 секунды, живой AR-трекинг радужки и морганий, автоподбор упражнений и локальная обработка без записи видео.</p>
             <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px;">
               <button class="btn btn-primary btn-lg" id="heroStartBtn" type="button" data-i18n="heroStartBtn">Включить камеру и начать</button>
               <button class="btn btn-lg" id="heroDemoBtn" type="button" style="background:rgba(255,255,255,0.12);color:#FFF;border-color:rgba(255,255,255,0.28);" data-i18n="demoShortBtn">Демо без камеры</button>
@@ -472,7 +452,6 @@
           </div>
         </div>
 
-        <!-- Simple 1-Row Control Strip -->
         <div class="cam-actions">
           <div class="cam-actions-group">
             <button class="btn btn-primary" id="startStopBtn" type="button" data-i18n="startBtn">Начать</button>
@@ -485,14 +464,14 @@
           </div>
         </div>
         <div id="collapsedCamNotice" class="banner ok" style="display:none;margin:0;padding:8px 12px;font-size:12.5px;">
-          <span data-i18n="camCollapsedText">Видео свёрнуто, но мониторинг продолжает работать в фоне.</span>
+          <span data-i18n="camCollapsedText">Видео свёрнуто — мониторинг продолжает работать в фоне.</span>
           <button class="btn btn-sm" id="expandVideoBtn" type="button" data-i18n="showCamBtn">Показать видео</button>
         </div>
       </section>
 
-      <!-- RIGHT: 3 CLEAN ONE-GLANCE METRIC CARDS -->
+      <!-- RIGHT: 3 ONE-GLANCE CARDS -->
       <section class="metrics-stack">
-        <!-- Card 1: Viewing Distance -->
+        <!-- Card 1: Distance -->
         <article class="card">
           <div class="card-header">
             <h2 class="card-title" data-i18n="cardDistance">Дистанция до экрана</h2>
@@ -500,7 +479,7 @@
           </div>
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
             <div class="metric-big tabular"><span id="distValue">—</span> <span style="font-size:15px;font-weight:600;color:var(--text-muted);" data-i18n="cm">см</span></div>
-            <div class="metric-sub tabular" id="diopterText">Нагрузка: — D</div>
+            <div class="metric-sub tabular" id="diopterText">Аккомодация: — D</div>
           </div>
           <div class="zone-bar" aria-hidden="true">
             <div class="zone-seg-red"></div>
@@ -508,10 +487,10 @@
             <div class="zone-seg-green"></div>
             <div class="zone-marker" id="distMarker" style="left:60%;"></div>
           </div>
-          <div class="metric-sub tabular" id="distCountdownText" data-i18n="distNormHint">Норма: ≥50 см (оптимум 60–70 см, СанПиН РК)</div>
+          <div class="metric-sub tabular" id="distCountdownText" data-i18n="distNormHint">Норма: ≥50 см (оптимум 60–70 см, СанПиН РК № ҚР ДСМ-79)</div>
         </article>
 
-        <!-- Card 2: Eye State & EFI-60 -->
+        <!-- Card 2: Eye Fatigue Index (EFI-60) -->
         <article class="card">
           <div class="card-header">
             <h2 class="card-title" data-i18n="cardEfi">Индекс усталости (EFI-60)</h2>
@@ -529,15 +508,15 @@
               <div class="metric-sub tabular" id="efiMetaText">Бейзлайн: 0/3 мин · Тренд: —</div>
             </div>
           </div>
-          <svg class="sparkline-svg" viewBox="0 0 240 36" preserveAspectRatio="none" aria-label="EFI trend">
+          <svg class="sparkline-svg" viewBox="0 0 240 36" preserveAspectRatio="none" aria-label="EFI 60-min sparkline">
             <polyline id="efiSparkLinePoly" fill="none" stroke="var(--accent)" stroke-width="2.2" points="0,33 240,33"/>
           </svg>
         </article>
 
-        <!-- Card 3: Next Rest + Quick Finish & Auto-Send -->
+        <!-- Card 3: Rest Timer + Finish & Send -->
         <article class="card">
           <div class="card-header">
-            <h2 class="card-title" data-i18n="cardRest">До следующего отдыха</h2>
+            <h2 class="card-title" data-i18n="cardRest">До следующего автоотдыха</h2>
             <span class="badge" id="nextExHintBadge">Auto</span>
           </div>
           <div class="gauge-wrap">
@@ -557,46 +536,43 @@
       </section>
     </main>
 
-    <!-- Hidden utility canvases for luma & S2 local video overlay -->
+    <!-- Hidden 32x24 luma sampling canvas ONLY (zero video recording!) -->
     <canvas id="lumaCanvas" width="32" height="24" style="display:none;"></canvas>
-    <canvas id="recordCanvas" width="640" height="480" style="display:none;"></canvas>
 
-    <!-- ==================== HIDDEN RESEARCHER SUITE (S1–S6 + AUTO-UPLOAD CONFIG) ==================== -->
+    <!-- ==================== RESEARCHER DRAWER (ALIGNED STRICTLY TO S1–S4 / H1–H5) ==================== -->
     <section class="research-drawer" id="researchDrawer">
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Панель исследователя (НИРС: S1–S6 & Автоотправка)</h2>
-          <button class="btn btn-sm" id="closeResearchBtn" type="button">Скрыть панель ✕</button>
+          <h2 class="card-title">Панель исследователя (НИРС: Studies S1–S4 · Hypotheses H1–H5)</h2>
+          <button class="btn btn-sm" id="closeResearchBtn" type="button">Скрыть ✕</button>
         </div>
 
         <div class="subtabs" role="tablist">
-          <button class="subtab-btn active" data-subtab="auto" type="button">Автоотправка & Ссылка</button>
-          <button class="subtab-btn" data-subtab="s1" type="button">S1 Дистанция</button>
-          <button class="subtab-btn" data-subtab="s2" type="button">S2 Моргания</button>
-          <button class="subtab-btn" data-subtab="s3" type="button">S3 AWAY</button>
-          <button class="subtab-btn" data-subtab="s4" type="button">S4 EFI & Блоки</button>
-          <button class="subtab-btn" data-subtab="s5" type="button">S5 Пилот & Анкеты</button>
-          <button class="subtab-btn" data-subtab="s6" type="button">S6 SUS & Аудит</button>
-          <button class="subtab-btn" data-subtab="export" type="button">Локальный экспорт</button>
+          <button class="subtab-btn active" data-subtab="auto" type="button">Автоотправка & Ссылки</button>
+          <button class="subtab-btn" data-subtab="s1" type="button">S1 Дистанция (H1)</button>
+          <button class="subtab-btn" data-subtab="s2" type="button">S2 EFI & Упражнения (H2–H3)</button>
+          <button class="subtab-btn" data-subtab="s3" type="button">S3 Пилот 2 нед (H4)</button>
+          <button class="subtab-btn" data-subtab="s4" type="button">S4 SUS & Аудит (H5)</button>
+          <button class="subtab-btn" data-subtab="export" type="button">Экспорт CSV / JSON</button>
         </div>
 
         <!-- SUBTAB: AUTO-UPLOAD & PARTICIPANT LINK GENERATOR -->
         <div class="subpanel active" id="sub-auto">
           <div class="cards-2">
             <div class="card" style="box-shadow:none;">
-              <h3 class="card-title">Автоматическая отправка разработчику (Webhook / Google Apps Script)</h3>
-              <p class="metric-sub" style="margin:0;">Вставьте URL вашего Google Apps Script (или n8n / Flask). После этого у всех участников данные (метрики, упражнения, анкеты — <strong>без видео</strong>) будут уходить автоматически каждые 5 мин, при нажатии «Завершить» и при закрытии вкладки.</p>
+              <h3 class="card-title">Автоотправка числовых агрегатов (HTTPS Webhook / Google Apps Script)</h3>
+              <p class="metric-sub" style="margin:0;">Данные (поминутные агрегаты, алерты, ΔEFI, анкеты — <strong>строго без видео</strong>) отправляются каждые 5 мин, после анкет, по кнопке «Завершить» и при закрытии вкладки (<code>sendBeacon</code>).</p>
               <label class="field-label" for="webhookUrlInput">URL приёмника (Webhook / Google Apps Script)</label>
               <input class="input mono" id="webhookUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
                 <button class="btn btn-primary btn-sm" id="saveWebhookBtn" type="button">Сохранить URL</button>
-                <button class="btn btn-sm" id="sendNowTestBtn" type="button">Отправить данные сейчас</button>
+                <button class="btn btn-sm" id="sendNowTestBtn" type="button">Отправить сейчас</button>
                 <span class="badge" id="queueBadge">Очередь: 0</span>
               </div>
             </div>
 
             <div class="card" style="box-shadow:none;">
-              <h3 class="card-title">Генератор готовой ссылки для участника (0 настроек у юзера)</h3>
+              <h3 class="card-title">Генератор преднастроенной ссылки (P01–P30, ноутбуки)</h3>
               <div class="grid-form">
                 <div>
                   <label class="field-label" for="pidInput">Код (PID)</label>
@@ -605,44 +581,49 @@
                 <div>
                   <label class="field-label" for="studyModeSelect">Режим</label>
                   <select class="select" id="studyModeSelect">
-                    <option value="standard">Standard (Обычный / S5 Основная)</option>
-                    <option value="research">Research (S4: рандомизация E1/E2/E3/CTRL)</option>
-                    <option value="pilot_silent">Silent Control (S5: тихий контроль)</option>
+                    <option value="standard">Standard (S3 Основная группа)</option>
+                    <option value="research">Research Mode (S2: блоки E1/E2/E3/CTRL)</option>
+                    <option value="pilot_silent">Silent Control (S3: контрольная группа)</option>
                   </select>
                 </div>
                 <div>
-                  <label class="field-label" for="visionSelect">Очки / Линзы</label>
+                  <label class="field-label" for="visionSelect">Коррекция зрения</label>
                   <select class="select" id="visionSelect">
                     <option value="none">Без очков</option>
-                    <option value="glasses">Очки</option>
+                    <option value="glasses">Очки (spectacles)</option>
                     <option value="contacts">Линзы</option>
                   </select>
                 </div>
                 <div>
-                  <label class="field-label" for="restIntervalInput">Отдых (мин)</label>
+                  <label class="field-label" for="restIntervalInput">Интервал отдыха (мин)</label>
                   <input class="input" id="restIntervalInput" type="number" min="5" max="60" value="20">
                 </div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
                 <button class="btn btn-primary btn-sm" id="savePassportBtn" type="button">Применить</button>
-                <button class="btn btn-sm" id="copyParticipantLinkBtn" type="button">Скопировать ссылку для участника</button>
+                <button class="btn btn-sm" id="copyParticipantLinkBtn" type="button">Скопировать ссылку участника</button>
+                <button class="btn btn-sm" id="reqNotifBtn" type="button">Права OS-уведомлений</button>
               </div>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:6px;cursor:pointer;">
-                <input type="checkbox" id="soundEnabledChk" checked> Звук Web Audio API (440 / 587–880 Гц)
-              </label>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;font-size:12.5px;">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                  <input type="checkbox" id="soundEnabledChk" checked> Звуки Web Audio (440 / 587–880 Гц)
+                </label>
+                <button class="btn btn-sm" id="testYellowToneBtn" type="button" style="min-height:26px;padding:2px 8px;">Тест 440 Гц</button>
+                <button class="btn btn-sm" id="testRedToneBtn" type="button" style="min-height:26px;padding:2px 8px;">Тест 587/880 Гц</button>
+              </div>
             </div>
           </div>
           <div class="mono" style="font-size:12px;color:var(--text-muted);" id="rawTelemetryLine">EAR: — | EAR_open: — | Iris: — px | f_px: — | sA/sIB/sBR: — | Baseline: —</div>
         </div>
 
-        <!-- SUBTAB: S1 DISTANCE -->
+        <!-- SUBTAB: S1 DISTANCE & ALERTS (H1) -->
         <div class="subpanel" id="sub-s1">
           <div class="cards-2">
             <div class="card" style="box-shadow:none;">
-              <h3 class="card-title">S1 · Замер дистанции 30–100 см (10-с медиана)</h3>
+              <h3 class="card-title">S1 · Замеры дистанции 30–100 см (10-с медиана)</h3>
               <div class="grid-form">
                 <div>
-                  <label class="field-label" for="s1RefSelect">Эталон D_ref</label>
+                  <label class="field-label" for="s1RefSelect">Эталон D_ref (рулетка/лазер)</label>
                   <select class="select" id="s1RefSelect">
                     <option value="30">30 см</option><option value="40">40 см</option><option value="50">50 см</option>
                     <option value="60" selected>60 см</option><option value="70">70 см</option><option value="80">80 см</option><option value="100">100 см</option>
@@ -650,133 +631,117 @@
                 </div>
                 <div>
                   <label class="field-label" for="s1GlassesSelect">Очки</label>
-                  <select class="select" id="s1GlassesSelect"><option value="no">Нет</option><option value="yes">Да</option></select>
+                  <select class="select" id="s1GlassesSelect"><option value="no">Без очков</option><option value="yes">В очках</option></select>
                 </div>
                 <div>
-                  <label class="field-label" for="s1LightSelect">Свет</label>
-                  <select class="select" id="s1LightSelect"><option value="bright">Норма</option><option value="dim">Тёмно</option></select>
+                  <label class="field-label" for="s1LightSelect">Освещение</label>
+                  <select class="select" id="s1LightSelect"><option value="bright">Нормальное</option><option value="dim">Приглушённое</option></select>
+                </div>
+                <div>
+                  <label class="field-label" for="s1CalibRefSelect">Калибровка (D_ref)</label>
+                  <select class="select" id="s1CalibRefSelect"><option value="50">50 см</option><option value="60" selected>60 см</option><option value="70">70 см</option></select>
                 </div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;">
-                <button class="btn btn-primary btn-sm" id="s1Record10sBtn" type="button">Записать 10 с</button>
+                <button class="btn btn-primary btn-sm" id="s1Record10sBtn" type="button">Записать 10 с (медиана)</button>
+                <button class="btn btn-sm" id="s1CalibCustomBtn" type="button">Откалибровать на выбранной D_ref</button>
                 <span class="badge tabular" id="s1ProgressBadge">Готов</span>
-                <span class="metric-sub tabular" id="s1LiveStats">MAE: — · MAPE: —</span>
               </div>
+              <div class="metric-sub tabular" id="s1LiveStats">MAE: — см (цель ≤5) · MAPE: —% (цель ≤10%)</div>
             </div>
+
             <div class="card" style="box-shadow:none;">
-              <h3 class="card-title">Тест задержки алертов и гистерезиса 48–52 см</h3>
+              <h3 class="card-title">S1 · Задержка алертов (≤5 с) и гистерезис 48–52 см</h3>
+              <p class="metric-sub" style="margin:0;">Отметьте момент пересечения границы зоны (в активной или фоновой вкладке), либо запустите 60-секундный тест отсутствия дребезга на 48–52 см.</p>
               <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                <button class="btn btn-amber btn-sm" id="s1MarkYellowBtn" type="button">Вход в Жёлтую</button>
-                <button class="btn btn-danger btn-sm" id="s1MarkRedBtn" type="button">Вход в Красную</button>
+                <button class="btn btn-amber btn-sm" id="s1MarkYellowBtn" type="button">Эталон: вход в Жёлтую (30–50)</button>
+                <button class="btn btn-danger btn-sm" id="s1MarkRedBtn" type="button">Эталон: вход в Красную (&lt;30)</button>
                 <button class="btn btn-sm" id="s1ChatterTestBtn" type="button">Тест 48–52 см (60 с)</button>
                 <button class="btn btn-sm" id="s1ClearBtn" type="button">Очистить S1</button>
               </div>
-              <div class="metric-sub mono" id="s1AlertTestOut">Ожидание...</div>
+              <div class="metric-sub mono" id="s1AlertTestOut">Ожидание отметки...</div>
             </div>
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>UTC</th><th>D_ref</th><th>D_est</th><th>Err (cm)</th><th>APE (%)</th><th>Glasses</th><th>Light</th></tr></thead>
+              <thead><tr><th>UTC</th><th>D_ref</th><th>D_est (med)</th><th>Err (cm)</th><th>APE (%)</th><th>Glasses</th><th>Light</th><th>Luma</th></tr></thead>
               <tbody id="s1Tbody" class="tabular"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- SUBTAB: S2 BLINKS -->
+        <!-- SUBTAB: S2 EFI VALIDITY & RANDOMIZED EXERCISES (H2, H3) -->
         <div class="subpanel" id="sub-s2">
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
-            <span class="badge tabular" id="s2TimerBadge">05:00</span>
-            <button class="btn btn-primary btn-sm" id="s2StartBtn" type="button">Старт 5-мин S2 (+локальное видео UTC)</button>
-            <button class="btn btn-danger btn-sm" id="s2StopBtn" type="button" disabled>Стоп S2</button>
-            <button class="btn btn-sm" id="s2DownloadClipBtn" type="button" disabled>Скачать видеоклип</button>
-            <button class="btn btn-danger btn-sm" id="s2DeleteClipBtn" type="button" disabled>Удалить видеоклип</button>
-            <span class="metric-sub tabular" id="s2StatsText">Морганий: 0 (неполных: 0)</span>
+            <button class="btn btn-primary btn-sm" id="s2EnableResearchBtn" type="button">Включить Research Mode (S2)</button>
+            <button class="btn btn-sm" id="s2TriggerNextBlockBtn" type="button">Запустить следующее событие блока</button>
+            <button class="btn btn-sm" id="s2OpenVasBtn" type="button">Записать усталость 0–10 (VAS)</button>
+            <button class="btn btn-sm" id="s2OpenCvsqBtn" type="button">CVS-Q (до/после S2)</button>
+            <span class="metric-sub tabular" id="s2BlockStats">Блоки: E-1: 0 · E-2: 0 · E-3: 0 · CTRL: 0 (0/12)</span>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Start UTC</th><th>End UTC</th><th>Dur ms</th><th>Type</th><th>minEAR / open</th><th>Blend</th></tr></thead>
-              <tbody id="s2Tbody" class="tabular"></tbody>
-            </table>
+          <div class="cards-2">
+            <div>
+              <h3 class="card-title" style="margin-bottom:6px;">События упражнений и контрольных пауз (ΔEFI, ΔIB)</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>UTC</th><th>Code</th><th>Resp</th><th>EFI pre</th><th>EFI post</th><th>ΔEFI</th><th>ΔIB</th></tr></thead>
+                  <tbody id="recentEventsTbody" class="tabular"></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <h3 class="card-title" style="margin-bottom:6px;">Оценки усталости VAS 0–10 (0 / 20 / 40 / 60 мин)</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>UTC</th><th>Checkpoint</th><th>VAS (0–10)</th><th>EFI-60</th></tr></thead>
+                  <tbody id="s2VasTbody" class="tabular"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- SUBTAB: S3 AWAY -->
+        <!-- SUBTAB: S3 TWO-WEEK LAPTOP PILOT RCT (H4) -->
         <div class="subpanel" id="sub-s3">
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;">
-            <button class="btn btn-sm" data-s3="leave" type="button">[1] Ушёл</button>
-            <button class="btn btn-sm" data-s3="turn_away" type="button">[2] Отвернулся</button>
-            <button class="btn btn-sm" data-s3="hand_face" type="button">[3] Рука у лица</button>
-            <button class="btn btn-sm" data-s3="phone_down" type="button">[4] В телефон</button>
-            <button class="btn btn-primary btn-sm" data-s3="return" type="button">[5] Вернулся</button>
-            <span class="badge tabular" id="s3CountBadge">0 / 10</span>
-            <span class="metric-sub mono" id="s3ActiveScenario">PRESENT</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Scenario</th><th>Start UTC</th><th>GT s</th><th>Det s</th><th>Err s</th><th>Paused?</th></tr></thead>
-              <tbody id="s3Tbody" class="tabular"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- SUBTAB: S4 EFI & RANDOMIZED BLOCKS -->
-        <div class="subpanel" id="sub-s4">
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
-            <button class="btn btn-primary btn-sm" id="s4EnableResearchBtn" type="button">Включить Research Mode (S4)</button>
-            <button class="btn btn-sm" id="s4TriggerNextBlockBtn" type="button">Запустить следующее событие блока</button>
-            <button class="btn btn-sm" id="s4OpenVasBtn" type="button">Записать усталость 0–10</button>
-            <span class="metric-sub tabular" id="s4BlockStats">Блоки: E-1: 0 · E-2: 0 · E-3: 0 · CTRL: 0 (0/12)</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>UTC</th><th>Code</th><th>Resp</th><th>EFI pre</th><th>EFI post</th><th>ΔEFI</th><th>ΔIB</th></tr></thead>
-              <tbody id="recentEventsTbody" class="tabular"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- SUBTAB: S5 PILOT & QUESTIONNAIRES -->
-        <div class="subpanel" id="sub-s5">
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
-            <select class="select select-compact" id="s5CheckpointSelect">
-              <option value="T0">T0 (Старт)</option>
-              <option value="T1">T1 (Конец 2–4 нед)</option>
-              <option value="T2">T2 (Через 1 нед отмены)</option>
+            <span class="badge" id="s3ArmBadge">Intervention</span>
+            <select class="select select-compact" id="s3CheckpointSelect">
+              <option value="T0">T0 (До старта)</option>
+              <option value="T1">T1 (Через 2 недели)</option>
+              <option value="T2">T2 (Через 1 нед отмены, опц.)</option>
             </select>
-            <button class="btn btn-primary btn-sm" id="openCvsqBtn" type="button">Анкета CVS-Q (16)</button>
-            <button class="btn btn-primary btn-sm" id="openOsdiBtn" type="button">Анкета OSDI (12)</button>
-            <button class="btn btn-sm" id="openSusBtn2" type="button">Анкета SUS (10)</button>
+            <button class="btn btn-primary btn-sm" id="openCvsqBtn" type="button">Анкета CVS-Q (16 симптомов)</button>
+            <button class="btn btn-primary btn-sm" id="openOsdiBtn" type="button">Анкета OSDI (12 вопросов)</button>
+            <button class="btn btn-sm" id="switchSilentBtn" type="button">Переключить Silent Control</button>
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>UTC</th><th>PID</th><th>CP</th><th>Scale</th><th>Score</th></tr></thead>
+              <thead><tr><th>UTC</th><th>PID</th><th>Arm</th><th>Checkpoint</th><th>Scale</th><th>Score</th></tr></thead>
               <tbody id="questTbody" class="tabular"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- SUBTAB: S6 USABILITY & AUDIT -->
-        <div class="subpanel" id="sub-s6">
+        <!-- SUBTAB: S4 USABILITY & DESKTOP PERFORMANCE (H5) -->
+        <div class="subpanel" id="sub-s4">
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
-            <button class="btn btn-primary btn-sm" id="openSusBtn" type="button">Пройти SUS (10 вопросов)</button>
-            <button class="btn btn-sm" id="runAuditBtn" type="button">Самоаудит браузера & WCAG 2.1 AA</button>
-            <button class="btn btn-sm" id="resetBaselineBtn" type="button">Сбросить 3-мин бейзлайн</button>
+            <button class="btn btn-primary btn-sm" id="openSusBtn" type="button">Пройти анкету SUS (10 вопросов)</button>
+            <button class="btn btn-sm" id="runAuditBtn" type="button">Аудит браузера, FPS & WCAG 2.1 AA</button>
+            <button class="btn btn-sm" id="resetBaselineBtn" type="button">Сбросить 3-мин бейзлайн EFI</button>
           </div>
-          <div id="auditOutput" class="mono" style="font-size:12px;white-space:pre-wrap;color:var(--text-muted);">Нажмите «Самоаудит» для проверки API, FPS и контрастности.</div>
+          <div id="auditOutput" class="mono" style="font-size:12px;white-space:pre-wrap;color:var(--text-muted);">Нажмите «Аудит браузера, FPS & WCAG 2.1 AA» для снятия метрик S4 (H5).</div>
         </div>
 
-        <!-- SUBTAB: LOCAL EXPORT -->
+        <!-- SUBTAB: LOCAL CSV / JSON EXPORT -->
         <div class="subpanel" id="sub-export">
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <button class="btn btn-primary btn-sm" id="exportAllJsonBtn" type="button">Скачать JSON-пакет</button>
+            <button class="btn btn-primary btn-sm" id="exportAllJsonBtn" type="button">Скачать единый JSON-пакет</button>
             <button class="btn btn-sm" data-export="minutes" type="button">minutes.csv</button>
             <button class="btn btn-sm" data-export="alerts" type="button">alerts.csv</button>
             <button class="btn btn-sm" data-export="exercises" type="button">events_exercises.csv</button>
             <button class="btn btn-sm" data-export="questionnaires" type="button">questionnaires.csv</button>
             <button class="btn btn-sm" data-export="s1" type="button">s1_distance.csv</button>
-            <button class="btn btn-sm" data-export="s2" type="button">s2_blinks.csv</button>
-            <button class="btn btn-sm" data-export="s3" type="button">s3_away.csv</button>
-            <button class="btn btn-sm" data-export="s6" type="button">s6_usability.csv</button>
+            <button class="btn btn-sm" data-export="s4" type="button">s4_usability.csv</button>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <span class="metric-sub" id="exportCountsSummary">—</span>
@@ -787,12 +752,12 @@
     </section>
 
     <footer class="disclaimer-foot">
-      <span data-i18n="disclaimer">EyeCare Monitor — эргономический инструмент профилактики усталости глаз (не медицинское изделие). Видео обрабатывается локально и никогда не отправляется.</span>
-      <span class="mono" id="footerPidInfo">PID: P01</span>
+      <span data-i18n="disclaimer">EyeCare Monitor — эргономическое десктоп-приложение профилактики зрительного утомления (не медицинское изделие). Видео обрабатывается локально и никогда не записывается и не отправляется.</span>
+      <span class="mono" id="footerPidInfo">PID: P01 · standard</span>
     </footer>
   </div>
 
-  <!-- In-page Mini-Widget Fallback -->
+  <!-- In-page Mini-Widget fallback (Firefox / Safari) -->
   <div class="mini-widget" id="inPageMiniWidget">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
       <strong>EyeCare Monitor</strong>
@@ -867,44 +832,40 @@
   'use strict';
 
   /* =========================================================================
-   * DEVELOPER CONFIGURATION (Set your Google Apps Script / Webhook URL ONCE!)
-   * Leave empty "" to save locally until you paste your URL here or via ?webhook=...
+   * DEVELOPER CONFIGURATION (Google Apps Script / HTTPS Webhook Receiver)
+   * Strictly receives pseudonymous numeric aggregates — ZERO video frames!
    * ========================================================================= */
   const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz4uu8ynsPO9HpVU-JDdgT0GoxAr6ZBr1E4RHZdtHdF2JZrDFLY_uAlsAmH_ZuGceDG/exec";
-  const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000; // Auto-upload every 5 min + on Stop + on page close
+  const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
   /* =========================================================================
-   * 1. TRILINGUAL I18N (RU / KK / EN) & QUESTIONNAIRES
+   * 1. TRILINGUAL LOCALIZATION (RU / KK / EN) & VALIDATED QUESTIONNAIRES
    * ========================================================================= */
   const I18N = {
     ru: {
-      subtitle: 'Интерактивная профилактика усталости глаз · 100% на устройстве',
+      subtitle: 'Мониторинг усталости глаз для ноутбуков и ПК · v0.6+ (без записи видео)',
       miniWidget: 'Мини-окно',
-      silentNotice: 'Активен фоновый сбор данных (тихий режим). По завершении работы нажмите «Завершить и отправить».',
-      demoPresetsLabel: 'Демо для жюри (симуляция):',
+      silentNotice: 'Активен тихий контрольный режим (S3 Silent Mode): оповещения и упражнения отключены, ведётся только фоновая запись метрик.',
+      demoPresetsLabel: 'Демо-режим (симуляция):',
       demoNormal: 'Норма (62 см)', demoYellow: 'Жёлтая (40 см)', demoRed: 'Красная (24 см)',
       demoIncomplete: 'Неполные моргания → E-1', demoFatigue: 'Усталость → E-3', demoAway: 'Уход (AWAY)',
       liveCameraTitle: 'Веб-камера в реальном времени (AR-трекинг глаз)',
       heroHeadline: 'Нажмите «Начать» — всё остальное сделает программа',
-      heroDesc: 'Автокалибровка за 3 секунды, живой трекинг радужки и морганий, автоматический подбор упражнений и автоотправка сводки.',
+      heroDesc: 'Автокалибровка за 3 секунды, живой AR-трекинг радужки и морганий, автоподбор упражнений и локальная обработка без записи видео.',
       heroStartBtn: 'Включить камеру и начать',
-      demoShortBtn: 'Демо',
-      stopDemoBtn: 'Выйти из Демо',
-      startBtn: 'Начать',
-      stopBtn: 'Пауза',
-      exerciseBtn: 'Упражнение сейчас',
-      recalibShort: 'Калибровка (3 с)',
-      collapseCamBtn: 'Свернуть видео',
-      showCamBtn: 'Показать видео',
-      camCollapsedText: 'Видео свёрнуто, но мониторинг продолжает работать в фоне.',
+      demoShortBtn: 'Демо', stopDemoBtn: 'Выйти из Демо',
+      startBtn: 'Начать', stopBtn: 'Пауза',
+      exerciseBtn: 'Упражнение сейчас', recalibShort: 'Калибровка (3 с)',
+      collapseCamBtn: 'Свернуть видео', showCamBtn: 'Показать видео',
+      camCollapsedText: 'Видео свёрнуто — мониторинг продолжает работать в фоне.',
       cardDistance: 'Дистанция до экрана', cm: 'см',
-      distNormHint: 'Норма: ≥50 см (оптимум 60–70 см, СанПиН РК)',
+      distNormHint: 'Норма: ≥50 см (оптимум 60–70 см, СанПиН РК № ҚР ДСМ-79)',
       cardEfi: 'Индекс усталости (EFI-60)',
       efiFresh: 'Свежие глаза', efiBuilding: 'Усталость копится', efiRest: 'Пора отдохнуть',
-      cardRest: 'До следующего отдыха',
+      cardRest: 'До следующего автоотдыха',
       restWaiting: 'Ожидание запуска', restActive: 'Активная работа', restAway: 'Лицо вне кадра (пауза)',
       finishSendBtn: 'Завершить сессию и отправить данные',
-      disclaimer: 'EyeCare Monitor — эргономический инструмент профилактики усталости глаз (не медицинское изделие). Видео обрабатывается локально и никогда не отправляется.',
+      disclaimer: 'EyeCare Monitor — эргономическое десктоп-приложение профилактики зрительного утомления (не медицинское изделие). Видео обрабатывается локально и никогда не записывается и не отправляется.',
       skipBtn: 'Пропустить', snoozeBtn: 'Позже (+5 мин)', startExBtn: 'Начать', doneExBtn: 'Готово',
       cancelBtn: 'Отмена', saveQuestBtn: 'Сохранить и отправить',
       away10Title: 'Вы отсутствовали более 10 минут',
@@ -912,45 +873,47 @@
       continueSessionBtn: 'Продолжить',
       zoneSafe: 'Норма', zoneYellow: 'Близко (30–50 см)', zoneRed: 'Очень близко (<30 см)',
       toastYellow: 'Вы близко к экрану (30–50 см). Отодвиньтесь минимум на 50 см.',
-      toastRed: 'Слишком близко (<30 см)! Отодвиньтесь для снятия нагрузки.',
+      toastRed: 'Слишком близко (<30 см)! Высокая нагрузка на аккомодацию — отодвиньтесь.',
+      toastDark: 'Освещение очень тусклое (luma < 42) — добавьте свет на рабочем месте.',
+      toastBright: 'Сильный засвет кадра (luma > 225) — уменьшите блики.',
       ex: {
-        'E-1': { title: 'E-1 · Силовое моргание', reason: 'Обнаружены неполные или редкие моргания', evidence: 'Исследования (Wolffsohn et al., 2025; Kim et al., 2021): 15 повторов «закрыть–сжать–открыть» снижают долю неполных морганий.', phases: ['Мягко закройте глаза', 'Сожмите веки', 'Спокойно откройте'] },
-        'E-2': { title: 'E-2 · Взгляд вдаль (20-20-20)', reason: 'Прошло 20 минут непрерывной работы', evidence: 'Правило 20-20-20 (Talens-Estarelles et al., 2023): 20 с взгляда вдаль (≥6 м) для расслабления цилиарной мышцы.', instruction: 'Посмотрите вдаль (≥6 метров, например в окно) в течение 20 секунд.' },
-        'E-3': { title: 'E-3 · Разминка для глаз (2 мин)', reason: 'Накоплена усталость глаз (EFI)', evidence: 'Комплекс из 6 шагов (Kim, 2016; Gupta & Aparna, 2020): краткая цифровая версия проверяется в S4.', steps: [
-          { name: 'Пальминг (ладони на закрытые веки)', dur: 20, anim: 'palm' },
-          { name: 'Мягкое моргание', dur: 15, anim: 'blink' },
-          { name: 'Взгляд влево — вправо', dur: 20, anim: 'lr' },
-          { name: 'Взгляд вверх — вниз', dur: 20, anim: 'ud' },
-          { name: 'Медленные круги глазами', dur: 20, anim: 'circle' },
-          { name: 'Фокус: палец (30 см) ↔ даль (>6 м)', dur: 25, anim: 'focus' }
+        'E-1': { title: 'E-1 · Силовое моргание («Закрыть–сжать–открыть»)', reason: 'Обнаружены неполные или редкие моргания', evidence: 'Клинические испытания при синдроме сухого глаза (Wolffsohn et al., 2025; Kim et al., 2021): 15 повторов снижают долю неполных морганий; перенос эффекта проверяется в S2–S3.', phases: ['Мягко закройте глаза', 'Сожмите веки', 'Спокойно откройте'] },
+        'E-2': { title: 'E-2 · Взгляд вдаль (правило 20-20-20)', reason: 'Прошло 20 минут непрерывной работы за компьютером', evidence: '2-недельный ноутбучный пилот (Talens-Estarelles et al., 2023) снизил симптомы DES (p ≤ 0,045); общая доказательность мета-анализов остаётся низкой (Singh et al., 2022).', instruction: 'Посмотрите на объект на расстоянии не менее 6 метров (например, в окно) в течение 20 секунд.' },
+        'E-3': { title: 'E-3 · Двухминутная разминка для глаз (6 шагов)', reason: 'Накоплена высокая усталость глаз (EFI)', evidence: 'Курсы глазной гимнастики снижали усталость у студентов (Kim, 2016; Gupta & Aparna, 2020); краткая 2-минутная версия проверяется в S2.', steps: [
+          { name: 'Пальминг (ладони на закрытые веки без давления)', dur: 20, anim: 'palm' },
+          { name: 'Мягкое свободное моргание', dur: 15, anim: 'blink' },
+          { name: 'Плавный взгляд влево — вправо', dur: 20, anim: 'lr' },
+          { name: 'Плавный взгляд вверх — вниз', dur: 20, anim: 'ud' },
+          { name: 'Медленные круговые движения глазами', dur: 20, anim: 'circle' },
+          { name: 'Смена фокуса: палец (30 см) ↔ даль (>6 м)', dur: 25, anim: 'focus' }
         ]},
-        'CTRL': { title: 'CTRL · Спокойная пауза (20 с)', reason: 'Контрольное условие (Research Mode)', evidence: '20 секунд спокойного отдыха без специальных упражнений для чистого сравнения ΔEFI.', instruction: 'Просто отдохните 20 секунд до мягкого сигнала.' }
+        'CTRL': { title: 'CTRL · Контрольная спокойная пауза (20 с)', reason: 'Исследовательский режим S2 (сбалансированная рандомизация)', evidence: 'Контрольное условие: 20 секунд спокойного отдыха без специальных упражнений для отделения эффекта упражнения от паузы.', instruction: 'Просто отдохните 20 секунд без упражнений до мягкого сигнала завершения.' }
       }
     },
     kk: {
-      subtitle: 'Көз шаршауының интерактивті алдын алуы · 100% құрылғыда',
+      subtitle: 'Ноутбук пен ДК үшін көз шаршауын бақылау · v0.6+ (бейне жазылмайды)',
       miniWidget: 'Шағын терезе',
-      silentNotice: 'Фондық деректер жинау белсенді. Жұмысты аяқтаған соң «Аяқтау және жіберу» батырмасын басыңыз.',
-      demoPresetsLabel: 'Қазыларға демо (симуляция):',
+      silentNotice: 'Тыныш бақылау режимі белсенді (S3 Silent Mode): хабарландырулар мен жаттығулар өшірілген, тек фондық метрикалар жазылады.',
+      demoPresetsLabel: 'Демо-режим (симуляция):',
       demoNormal: 'Қалыпты (62 см)', demoYellow: 'Сары (40 см)', demoRed: 'Қызыл (24 см)',
       demoIncomplete: 'Толық емес жыпылықтау → E-1', demoFatigue: 'Шаршау → E-3', demoAway: 'Кету (AWAY)',
       liveCameraTitle: 'Нақты уақыттағы веб-камера (AR көз трекингі)',
       heroHeadline: '«Бастау» батырмасын басыңыз — қалғанын бағдарлама өзі жасайды',
-      heroDesc: '3 секундта автокалибрлеу, нұрлы қабық пен жыпылықтауды бақылау, автоматты жаттығулар және деректерді автожіберу.',
+      heroDesc: '3 секундта автокалибрлеу, нұрлы қабық пен жыпылықтауды AR-бақылау, автоматты жаттығулар және бейне жазбасыз жергілікті өңдеу.',
       heroStartBtn: 'Камераны қосу және бастау',
       demoShortBtn: 'Демо', stopDemoBtn: 'Демодан шығу',
       startBtn: 'Бастау', stopBtn: 'Кідірту',
       exerciseBtn: 'Жаттығу', recalibShort: 'Калибрлеу (3 с)',
       collapseCamBtn: 'Бейнені жасыру', showCamBtn: 'Бейнені көрсету',
-      camCollapsedText: 'Бейне жасырылды, бірақ бақылау фонда жалғасуда.',
+      camCollapsedText: 'Бейне жасырылды — бақылау фонда жалғасуда.',
       cardDistance: 'Экранға дейінгі қашықтық', cm: 'см',
       distNormHint: 'Қалыпты: ≥50 см (оңтайлы 60–70 см, ҚР ДСМ-79)',
       cardEfi: 'Шаршау индексі (EFI-60)',
       efiFresh: 'Көз сергек', efiBuilding: 'Шаршау жиналуда', efiRest: 'Демалатын уақыт',
-      cardRest: 'Келесі демалысқа дейін',
+      cardRest: 'Келесі авто-демалысқа дейін',
       restWaiting: 'Іске қосуды күтуде', restActive: 'Белсенді жұмыс', restAway: 'Бет кадрда жоқ (кідіріс)',
       finishSendBtn: 'Сессияны аяқтау және деректерді жіберу',
-      disclaimer: 'EyeCare Monitor — эргономикалық құрал (медициналық бұйым емес). Бейне тек құрылғыңызда өңделеді және ешқайда жіберілмейді.',
+      disclaimer: 'EyeCare Monitor — эргономикалық десктоп-құрал (медициналық бұйым емес). Бейне тек құрылғыңызда өңделеді, ешқашан жазылмайды және жіберілмейді.',
       skipBtn: 'Өткізу', snoozeBtn: 'Кейінірек (+5 мин)', startExBtn: 'Бастау', doneExBtn: 'Дайын',
       cancelBtn: 'Болдырмау', saveQuestBtn: 'Сақтау және жіберу',
       away10Title: '10 минуттан астам болмадыңыз',
@@ -958,87 +921,91 @@
       continueSessionBtn: 'Жалғастыру',
       zoneSafe: 'Қалыпты', zoneYellow: 'Жақын (30–50 см)', zoneRed: 'Өте жақын (<30 см)',
       toastYellow: 'Экранға жақын отырсыз (30–50 см). Кемінде 50 см шегініңіз.',
-      toastRed: 'Өте жақын (<30 см)! Көзге жүктемені азайту үшін шегініңіз.',
+      toastRed: 'Өте жақын (<30 см)! Аккомодация жүктемесі жоғары — шегініңіз.',
+      toastDark: 'Жарық тым әлсіз (luma < 42) — жұмыс орнындағы жарықты арттырыңыз.',
+      toastBright: 'Жарық тым шамадан тыс (luma > 225) — шағылысуды азайтыңыз.',
       ex: {
-        'E-1': { title: 'E-1 · Күшті жыпылықтау', reason: 'Толық емес немесе сирек жыпылықтау', evidence: '15 рет «жабу–қысу–ашу» жаттығуы (Wolffsohn et al., 2025).', phases: ['Көзді ақырын жабыңыз', 'Қабақты қысыңыз', 'Жайлап ашыңыз'] },
-        'E-2': { title: 'E-2 · Алысқа қарау (20-20-20)', reason: '20 минут үздіксіз жұмыс өтті', evidence: '20-20-20 ережесі: 6 метрден алысқа 20 секунд қарау.', instruction: '20 секунд бойы кемінде 6 метр алысқа қараңыз.' },
-        'E-3': { title: 'E-3 · Көз жаттығуы (2 мин)', reason: 'Жоғары көз шаршауы (EFI)', evidence: '6 қадамды көз гимнастикасы (Kim, 2016; Gupta & Aparna, 2020).', steps: [
-          { name: 'Пальминг (алақанды жабық көзге қою)', dur: 20, anim: 'palm' },
-          { name: 'Жұмсақ жыпылықтау', dur: 15, anim: 'blink' },
-          { name: 'Солға — оңға қарау', dur: 20, anim: 'lr' },
-          { name: 'Жоғары — төмен қарау', dur: 20, anim: 'ud' },
-          { name: 'Шеңбер бойымен қозғалту', dur: 20, anim: 'circle' },
-          { name: 'Фокус: саусақ (30 см) ↔ алыс (>6 м)', dur: 25, anim: 'focus' }
+        'E-1': { title: 'E-1 · Күшті жыпылықтау («Жабу–қысу–ашу»)', reason: 'Толық емес немесе сирек жыпылықтау анықталды', evidence: 'Құрғақ көз сынақтары (Wolffsohn et al., 2025; Kim et al., 2021): 15 қайталау толық емес жыпылықтауды азайтты.', phases: ['Көзді ақырын жабыңыз', 'Қабақты сәл қысыңыз', 'Жайлап ашыңыз'] },
+        'E-2': { title: 'E-2 · Алысқа қарау (20-20-20 ережесі)', reason: '20 минут үздіксіз жұмыс өтті', evidence: '2 апталық ноутбук сынағы (Talens-Estarelles et al., 2023) DES симптомдарын төмендетті (p ≤ 0.045).', instruction: '20 секунд бойы кемінде 6 метр алыстағы нысанға қараңыз.' },
+        'E-3': { title: 'E-3 · Екі минуттық көз жаттығуы (6 қадам)', reason: 'Жоғары көз шаршауы жиналды (EFI)', evidence: 'Студенттердегі көз гимнастикасы шаршауды азайтты (Kim, 2016; Gupta & Aparna, 2020); 2 минуттық нұсқа S2-де тексеріледі.', steps: [
+          { name: 'Пальминг (алақанды жабық көзге қыспай қою)', dur: 20, anim: 'palm' },
+          { name: 'Жұмсақ еркін жыпылықтау', dur: 15, anim: 'blink' },
+          { name: 'Көзді солға — оңға баяу қозғалту', dur: 20, anim: 'lr' },
+          { name: 'Көзді жоғары — төмен баяу қозғалту', dur: 20, anim: 'ud' },
+          { name: 'Баяу шеңбер бойымен қозғалту', dur: 20, anim: 'circle' },
+          { name: 'Фокус ауыстыру: саусақ (30 см) ↔ алыс (>6 м)', dur: 25, anim: 'focus' }
         ]},
-        'CTRL': { title: 'CTRL · Тыныш үзіліс (20 с)', reason: 'Зерттеу режимі (бақылау)', evidence: 'Арнайы жаттығусыз 20 секундтық демалыс.', instruction: 'Дыбыстық белгіге дейін 20 секунд тыныш демалыңыз.' }
+        'CTRL': { title: 'CTRL · Бақылау тыныш үзілісі (20 с)', reason: 'Зерттеу режимі S2 (теңгерімді рандомизация)', evidence: 'Жаттығу әсерін қарапайым үзілістен ажырату үшін 20 секундтық тыныш демалыс.', instruction: 'Аяқталу сигналына дейін 20 секунд арнайы жаттығусыз демалыңыз.' }
       }
     },
     en: {
-      subtitle: 'Interactive Digital Eye Strain Prevention · 100% On-Device',
+      subtitle: 'Desktop & Laptop Eye Fatigue Monitor · v0.6+ (Zero Video Recording)',
       miniWidget: 'Mini-widget',
-      silentNotice: 'Background data collection active (Silent Mode). Click “Finish & Send Data” when done.',
-      demoPresetsLabel: 'Jury Demo (Simulation):',
+      silentNotice: 'Silent Control Mode active (S3): alerts and exercises are suppressed; only local background telemetry is recorded.',
+      demoPresetsLabel: 'Demo Mode (Simulation):',
       demoNormal: 'Normal (62 cm)', demoYellow: 'Yellow (40 cm)', demoRed: 'Red (24 cm)',
       demoIncomplete: 'Incomplete Blinks → E-1', demoFatigue: 'High Fatigue → E-3', demoAway: 'Away (AWAY)',
       liveCameraTitle: 'Live Webcam Stage (AR Ocular Tracking)',
       heroHeadline: 'Click Start — the app handles everything automatically',
-      heroDesc: '3-second auto-calibration, live iris & blink AR tracking, automatic exercises, and automatic metric upload.',
+      heroDesc: '3-second auto-calibration, live iris & blink AR tracking, zero-click adaptive exercises, and strictly local processing with zero video recording.',
       heroStartBtn: 'Enable Camera & Start',
       demoShortBtn: 'Demo', stopDemoBtn: 'Exit Demo',
       startBtn: 'Start', stopBtn: 'Pause',
       exerciseBtn: 'Exercise Now', recalibShort: 'Calibrate (3 s)',
       collapseCamBtn: 'Hide Video', showCamBtn: 'Show Video',
-      camCollapsedText: 'Video preview is collapsed; monitoring continues in the background.',
+      camCollapsedText: 'Video preview is collapsed — monitoring continues in the background.',
       cardDistance: 'Viewing Distance', cm: 'cm',
-      distNormHint: 'Safe: ≥50 cm (optimal 60–70 cm, RK Order ҚР ДСМ-79)',
+      distNormHint: 'Safe: ≥50 cm (optimal 60–70 cm, RK Order No. ҚР ДСМ-79)',
       cardEfi: 'Eye Fatigue Index (EFI-60)',
-      efiFresh: 'Fresh eyes', efiBuilding: 'Fatigue building up', efiRest: 'Time to rest',
+      efiFresh: 'Fresh eyes', efiBuilding: 'Fatigue is building up', efiRest: 'Time to rest',
       cardRest: 'Next Automatic Rest',
-      restWaiting: 'Waiting to start', restActive: 'Active screen work', restAway: 'Face out of frame (paused)',
+      restWaiting: 'Waiting to start', restActive: 'Active computer work', restAway: 'Face out of frame (paused)',
       finishSendBtn: 'Finish Session & Send Data',
-      disclaimer: 'EyeCare Monitor is an ergonomic aid (not a medical device). Video is processed strictly on-device and never transmitted.',
+      disclaimer: 'EyeCare Monitor is a non-medical desktop ergonomic aid. Video is processed strictly in browser memory and is never recorded or transmitted.',
       skipBtn: 'Skip', snoozeBtn: 'Later (+5 min)', startExBtn: 'Start', doneExBtn: 'Done',
       cancelBtn: 'Cancel', saveQuestBtn: 'Save & Send',
       away10Title: 'Away for over 10 minutes',
-      away10Text: 'Session paused. Continue monitoring or finish and send data?',
+      away10Text: 'Session paused automatically. Continue monitoring or finish and send data?',
       continueSessionBtn: 'Continue',
       zoneSafe: 'Safe', zoneYellow: 'Close (30–50 cm)', zoneRed: 'Too Close (<30 cm)',
-      toastYellow: 'Viewing distance 30–50 cm. Move back to ≥50 cm.',
-      toastRed: 'Too close (<30 cm)! Move back to reduce ciliary load.',
+      toastYellow: 'Viewing distance 30–50 cm. Move back to at least 50 cm.',
+      toastRed: 'Very close (<30 cm)! High accommodative load — step back.',
+      toastDark: 'Scene is very dim (luma < 42) — consider improving ambient lighting.',
+      toastBright: 'Over-exposed scene (luma > 225) — reduce screen glare.',
       ex: {
-        'E-1': { title: 'E-1 · Forceful Blinking', reason: 'Incomplete or infrequent blinks detected', evidence: 'Dry-eye trials (Wolffsohn et al., 2025): 15 close–squeeze–open reps reduce incomplete blinks.', phases: ['Close gently', 'Squeeze eyelids', 'Open calmly'] },
-        'E-2': { title: 'E-2 · Distant Gaze (20-20-20)', reason: '20 minutes of continuous screen work', evidence: '20-20-20 rule (Talens-Estarelles et al., 2023): 20 s distant gaze (≥6 m).', instruction: 'Look at an object ≥6 meters away for 20 seconds.' },
-        'E-3': { title: 'E-3 · 2-Min Ocular Warm-Up', reason: 'Elevated Eye Fatigue Index (EFI)', evidence: '6-step warm-up (Kim, 2016; Gupta & Aparna, 2020) tested in S4.', steps: [
-          { name: 'Palming (warm palms over closed eyes)', dur: 20, anim: 'palm' },
+        'E-1': { title: 'E-1 · Forceful Blinking (“Close–Squeeze–Open”)', reason: 'Incomplete or infrequent blinks detected', evidence: 'Dry-eye trials (Wolffsohn et al., 2025; Kim et al., 2021) reduced symptoms and incomplete blinks; transfer to healthy laptop users is evaluated in S2–S3.', phases: ['Close eyes gently', 'Squeeze eyelids', 'Open calmly'] },
+        'E-2': { title: 'E-2 · Distant Gaze (20-20-20 Rule)', reason: '20 minutes of continuous computer work elapsed', evidence: '2-week laptop trial (Talens-Estarelles et al., 2023) improved DES (p ≤ 0.045); overall meta-analytic certainty remains low (Singh et al., 2022).', instruction: 'Look at an object at least 6 meters (20 feet) away for 20 seconds.' },
+        'E-3': { title: 'E-3 · Two-Minute Ocular Warm-Up (6 Steps)', reason: 'Elevated accumulated Eye Fatigue Index (EFI)', evidence: 'Student yoga eye programmes lowered fatigue (Kim, 2016; Gupta & Aparna, 2020); condensed 2-min digital version tested in S2.', steps: [
+          { name: 'Palming (warm palms gently over closed eyelids)', dur: 20, anim: 'palm' },
           { name: 'Soft relaxed blinking', dur: 15, anim: 'blink' },
           { name: 'Smooth gaze left — right', dur: 20, anim: 'lr' },
           { name: 'Smooth gaze up — down', dur: 20, anim: 'ud' },
-          { name: 'Slow circular movements', dur: 20, anim: 'circle' },
-          { name: 'Focus shift: finger (30 cm) ↔ far (>6 m)', dur: 25, anim: 'focus' }
+          { name: 'Slow circular eye movements', dur: 20, anim: 'circle' },
+          { name: 'Focus shift: finger (30 cm) ↔ distance (>6 m)', dur: 25, anim: 'focus' }
         ]},
-        'CTRL': { title: 'CTRL · Quiet Pause (20 s)', reason: 'Research Mode control break', evidence: '20-second quiet rest comparator for ΔEFI analysis.', instruction: 'Rest quietly for 20 seconds until the chime.' }
+        'CTRL': { title: 'CTRL · Quiet Control Pause (20 s)', reason: 'Research Mode S2 (balanced random block)', evidence: '20-second quiet rest comparator to isolate neuromuscular exercise effects from passive breaks.', instruction: 'Rest quietly for 20 seconds without any eye exercise until the soft chime.' }
       }
     }
   };
 
   const CVSQ_ITEMS = {
-    ru: ['Жжение','Зуд','Ощущение инородного тела','Слезотечение','Учащённое моргание','Покраснение глаз','Боль в глазах','Тяжесть в веках','Сухость','Размытость зрения','Двоение в глазах','Трудность фокусировки вблизи','Чувствительность к свету','Ореолы вокруг предметов','Ощущение ухудшения зрения','Головная боль'],
-    kk: ['Көздің ашуы','Қышу','Бөгде зат сезімі','Жасаурау','Жиі жыпылықтау','Қызару','Көз ауыруы','Қабақ ауырлығы','Құрғақтық','Бұлыңғырлану','Қосарланып көріну','Жақын фокустау қиындығы','Жарыққа сезімталдық','Шеңберлер көрінуі','Көру нашарлағандай сезім','Бас ауыруы'],
-    en: ['Burning','Itching','Foreign body sensation','Tearing','Excessive blinking','Eye redness','Eye pain','Heavy eyelids','Dryness','Blurred vision','Double vision','Difficulty focusing near','Light sensitivity','Colored halos','Sight worsening','Headache']
+    ru: ['Жжение','Зуд','Ощущение инородного тела','Слезотечение','Учащённое моргание','Покраснение глаз','Боль в глазах','Тяжесть в веках','Сухость','Размытость зрения','Двоение в глазах','Трудность фокусировки вблизи','Повышенная чувствительность к свету','Ореолы вокруг предметов','Ощущение ухудшения зрения','Головная боль'],
+    kk: ['Көздің ашуы','Қышу','Бөгде зат сезімі','Көздің жасаурауы','Жиі жыпылықтау','Көздің қызаруы','Көз ауыруы','Қабақ ауырлығы','Құрғақтық','Көрудің бұлыңғырлануы','Қосарланып көріну','Жақыннан фокустау қиындығы','Жарыққа сезімталдық','Заттар айналасындағы шеңберлер','Көру нашарлағандай сезім','Бас ауыруы'],
+    en: ['Burning','Itching','Feeling of a foreign body','Tearing','Excessive blinking','Eye redness','Eye pain','Heavy eyelids','Dryness','Blurred vision','Double vision','Difficulty focusing for near vision','Increased sensitivity to light','Colored halos around objects','Feeling that sight is worsening','Headache']
   };
   const OSDI_ITEMS = {
-    ru: ['Светобоязнь','Ощущение песка','Боль или резь','Затуманенное зрение','Плохое зрение','Трудности при чтении','Вождение ночью','Работа за компьютером','Просмотр ТВ','Дискомфорт на ветру','Низкая влажность','Помещения с кондиционером'],
-    kk: ['Жарыққа сезімталдық','Көзде құм сезімі','Көз ауыруы','Бұлыңғыр көру','Нашар көру','Оқу қиындығы','Түнде көлік жүргізу','Компьютермен жұмыс','Теледидар көру','Желді ауа райы','Құрғақ ауа','Кондиционер бар бөлме'],
-    en: ['Light sensitivity','Gritty eyes','Painful/sore eyes','Blurred vision','Poor vision','Problems reading','Driving at night','Working with computer','Watching TV','Windy conditions','Low humidity','Air-conditioned areas']
+    ru: ['Светобоязнь (чувствительность к свету)','Ощущение песка в глазах','Боль или резь в глазах','Затуманенное зрение','Плохое зрение','Затруднения при чтении','Затруднения при вождении ночью','Затруднения при работе за компьютером','Затруднения при просмотре ТВ','Дискомфорт в ветреную погоду','Дискомфорт в местах с низкой влажностью','Дискомфорт в помещениях с кондиционером'],
+    kk: ['Жарыққа сезімталдық','Көзде құм бардай сезім','Көздің ауыруы немесе шаншуы','Бұлыңғыр көру','Нашар көру','Оқу кезіндегі қиындық','Түнде көлік жүргізу қиындығы','Компьютермен жұмыс істеу қиындығы','Теледидар көру қиындығы','Желді ауа райындағы жайсыздық','Құрғақ ауадағы жайсыздық','Кондиционер бар бөлмедегі жайсыздық'],
+    en: ['Eyes sensitive to light','Eyes that feel gritty','Painful or sore eyes','Blurred vision','Poor vision','Problems reading','Problems driving at night','Problems working with a computer or bank machine','Problems watching TV','Discomfort in windy conditions','Discomfort in places with low humidity','Discomfort in areas that are air conditioned']
   };
   const SUS_ITEMS = {
-    ru: ['Хотел(а) бы часто пользоваться этим приложением.','Приложение показалось излишне сложным.','Приложение было простым в использовании.','Мне понадобилась бы помощь специалиста.','Функции приложения хорошо интегрированы.','В приложении слишком много несогласованностей.','Большинство людей быстро научатся им пользоваться.','Приложение показалось очень неудобным.','Я чувствовал(а) себя уверенно при работе.','Пришлось многому научиться перед стартом.'],
-    kk: ['Қосымшаны жиі қолданғым келеді.','Қосымша тым күрделі көрінді.','Қосымшаны пайдалану оңай болды.','Маманның көмегі қажет болады.','Функциялар өзара жақсы үйлескен.','Сәйкессіздіктер тым көп.','Көпшілігі тез үйреніп алады.','Қосымша ыңғайсыз көрінді.','Өзімді сенімді сезіндім.','Бастамас бұрын көп үйрену керек болды.'],
-    en: ['I would like to use this system frequently.','I found the system unnecessarily complex.','I thought the system was easy to use.','I would need technical support to use it.','Functions were well integrated.','Too much inconsistency in this system.','Most people would learn it very quickly.','I found the system very cumbersome.','I felt very confident using the system.','I needed to learn a lot before starting.']
+    ru: ['Я бы хотел(а) часто пользоваться этим приложением.','Приложение показалось мне излишне сложным.','Приложение было простым в использовании.','Думаю, мне понадобилась бы помощь специалиста для работы с приложением.','Функции приложения хорошо интегрированы между собой.','В приложении слишком много несогласованностей.','Большинство людей смогут очень быстро научиться им пользоваться.','Приложение показалось мне очень неудобным (громоздким).','Я чувствовал(а) себя уверенно при использовании приложения.','Мне пришлось многому научиться, прежде чем я смог(ла) начать работу.'],
+    kk: ['Мен бұл қосымшаны жиі қолданғым келеді.','Қосымша маған шамадан тыс күрделі болып көрінді.','Қосымшаны пайдалану оңай болды.','Қосымшаны қолдану үшін маманның көмегі қажет болады деп ойлаймын.','Қосымшаның функциялары өзара жақсы үйлескен.','Қосымшада сәйкессіздіктер тым көп.','Адамдардың көпшілігі оны өте тез үйреніп алады деп ойлаймын.','Қосымша маған өте ыңғайсыз болып көрінді.','Қосымшаны қолдану кезінде өзімді сенімді сезіндім.','Жұмысты бастамас бұрын көп нәрсені үйренуге тура келді.'],
+    en: ['I think that I would like to use this system frequently.','I found the system unnecessarily complex.','I thought the system was easy to use.','I think that I would need the support of a technical person to use this system.','I found the various functions in this system were well integrated.','I thought there was too much inconsistency in this system.','I would imagine that most people would learn to use this system very quickly.','I found the system very cumbersome to use.','I felt very confident using the system.','I needed to learn a lot of things before I could get going with this system.']
   };
 
   /* =========================================================================
-   * 2. UTILITIES & LOCAL INDEXEDDB STORE
+   * 2. UTILITIES & INDEXEDDB STORE (EyeCareMonitorDB_v2, S1–S4 ONLY)
    * ========================================================================= */
   const $ = (id) => document.getElementById(id);
   const nowIso = () => new Date().toISOString();
@@ -1050,7 +1017,7 @@
   const percentile = (arr, p) => { if (!arr || !arr.length) return 0; const s = [...arr].sort((a,b)=>a-b); return s[clamp(Math.floor((p/100)*(s.length-1)), 0, s.length-1)]; };
   const fmtMMSS = (sec) => { const s = Math.max(0, Math.floor(sec)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
   const dist2D = (a, b, vw, vh) => Math.hypot((a.x - b.x) * vw, (a.y - b.y) * vh);
-  const detectDevice = () => (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || window.innerWidth < 680) ? 'phone' : 'desktop';
+  const isHandheldUA = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
   const detectWebView = () => /Instagram|FBAN|FBAV|Telegram|WhatsApp|Line\/|VKClient|; wv\)/i.test(navigator.userAgent || '');
   const safeLSGet = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
   const safeLSSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
@@ -1071,7 +1038,7 @@
   class LocalStore {
     constructor() {
       this.dbName = 'EyeCareMonitorDB_v2';
-      this.stores = ['minutes', 'alerts', 'exercises', 'questionnaires', 's1', 's2', 's3', 's6'];
+      this.stores = ['minutes', 'alerts', 'exercises', 'questionnaires', 's1', 's4'];
       this.db = null; this.usingMemory = false; this.mem = {};
       this.stores.forEach(s => { this.mem[s] = []; });
     }
@@ -1079,7 +1046,7 @@
       if (typeof indexedDB === 'undefined') { this.usingMemory = true; return; }
       try {
         this.db = await new Promise((res, rej) => {
-          const req = indexedDB.open(this.dbName, 1);
+          const req = indexedDB.open(this.dbName, 2);
           req.onupgradeneeded = (e) => {
             const db = e.target.result;
             this.stores.forEach(name => { if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: '_id', autoIncrement: true }); });
@@ -1140,7 +1107,7 @@
   }
 
   /* =========================================================================
-   * 3. AUDIO & NOTIFICATIONS ENGINE
+   * 3. WEB AUDIO API & NOTIFICATIONS ENGINE
    * ========================================================================= */
   class AudioNotifEngine {
     constructor() { this.ctx = null; this.keepAliveOsc = null; this.keepAliveGain = null; this.defaultTitle = document.title; this.titleTimer = null; }
@@ -1157,7 +1124,7 @@
       if (!this.ctx || this.keepAliveOsc) return;
       try {
         const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
-        osc.type = 'sine'; osc.frequency.value = 20; g.gain.value = 0.00003;
+        osc.type = 'sine'; osc.frequency.value = 20; g.gain.value = 0.00003; // 20 Hz, ~ -90 dB
         osc.connect(g); g.connect(this.ctx.destination); osc.start();
         this.keepAliveOsc = osc; this.keepAliveGain = g;
       } catch {}
@@ -1184,6 +1151,10 @@
     playYellow() { this.playTone(440, 180, 0, 0.13); }
     playRed() { this.playTone(587, 150, 0, 0.16); this.playTone(880, 150, 250, 0.16); }
     playChime() { this.playTone(523.25, 150, 0, 0.09); this.playTone(659.25, 200, 130, 0.09); }
+    async requestPermission() {
+      if (!('Notification' in window)) return 'unsupported';
+      try { return await Notification.requestPermission(); } catch { return 'denied'; }
+    }
     notify(title, body) {
       document.title = `(!) ${title}`;
       clearTimeout(this.titleTimer);
@@ -1195,7 +1166,7 @@
   }
 
   /* =========================================================================
-   * 4. STATE & AUTOMATIC CLOUD UPLOADER (CORS-SAFE + SEND-BEACON + OFFLINE QUEUE)
+   * 4. STATE (DESKTOP WORKSTATION ONLY) & AUTO-UPLOADER
    * ========================================================================= */
   const store = new LocalStore();
   const audio = new AudioNotifEngine();
@@ -1203,7 +1174,6 @@
   const STATE = {
     lang: 'ru',
     theme: 'light',
-    deviceProfile: detectDevice(),
     running: false,
     demoMode: false,
     demoPreset: 'normal',
@@ -1214,19 +1184,18 @@
     syncBusy: false,
     lastSyncUtc: null,
 
-    // Pre-configured participant metadata (no consent modals needed!)
-    passport: safeLSGet('ecm_passport_v2', { pid: 'P01', vision: 'none' }),
-    settings: safeLSGet('ecm_settings_v2', { restIntervalMin: 20, yellowDwellSec: 60, redDwellSec: 15, soundEnabled: true }),
-    calibrations: safeLSGet('ecm_calibrations_v2', { desktop: null, phone: null }),
-    baselines: safeLSGet('ecm_baselines_v2', { desktop: null, phone: null }),
+    passport: safeLSGet('ecm_passport_desktop', { pid: 'P01', vision: 'none' }),
+    settings: safeLSGet('ecm_settings_desktop', { restIntervalMin: 20, yellowDwellSec: 60, redDwellSec: 15, soundEnabled: true }),
+    calibration: safeLSGet('ecm_calibration_desktop', null),
+    baseline: safeLSGet('ecm_baseline_desktop', null),
 
-    // Auto-calibration (3-second zero-modal flow)
+    // Automated 3-second single-point calibration
     autoCalibActive: false,
     autoCalibEndMs: 0,
     autoCalibSamples: [],
     autoCalibRefCm: 60,
 
-    // S6 Telemetry
+    // S4 Usability & Performance telemetry
     pageLoadMs: performance.now(),
     onboardingSec: null,
     calibrationAttempts: 0,
@@ -1239,17 +1208,20 @@
     fpsWindowTs: [], currentFps: 0, currentLuma: null, lastLumaToastMs: 0,
     latestLandmarks: null, latestVw: 640, latestVh: 480, blinkFlashUntilMs: 0, blinkFlashType: 'complete',
 
-    // Metrics
+    // Distance & Alert Zones
     rawIrisPx: null, rawEar: null, rawBlendL: 0, rawBlendR: 0,
     distBuffer: [], currentDistCm: null, currentZone: 'safe',
     zoneEnterMs: null, safeRecoveryMs: null, lastYellowAlertMs: 0, lastRedAlertMs: 0,
 
+    // Blinks (EAR + Blendshapes)
     earOpenWindow: [], earOpen: null, inBlink: false, blinkStartMs: 0, blinkMinEar: 1, blinkMaxBlend: 0,
     blinkEvents60s: [], currentBR: 0, currentIB: 0, lowBrStartMs: null,
 
+    // Presence (AWAY)
     facePresent: false, faceLostMs: null, faceReturnMs: null, isAway: false, awayStartMs: null,
     away10PromptShown: false, ignoreAwayForPalming: false,
 
+    // Minute Accumulator & EFI
     sessionActiveSec: 0, workSinceBreakSec: 0, breaksToday: 0, lastTickMs: 0,
     minuteBucketStartMs: 0, minuteActiveSec: 0, minuteAwaySec: 0,
     minuteDistSamples: [], minuteZoneSec: { safe: 0, yellow: 0, red: 0 },
@@ -1258,18 +1230,18 @@
     currentSubScores: { sA: 0, sIB: 0, sBR: 0 },
     currentEfiMin: 0, currentEfi60: 0, currentEfiTrend: 0,
 
-    // Exercise Engine
+    // Exercise Engine (S2 Research Mode + Standard Adaptive Mode)
     exerciseOverlayOpen: false, exerciseRunning: false, exerciseTimerId: null,
     activeExerciseEvent: null, pendingDeltaEvents: [], recentConditions: [],
     lastE3Ms: 0, snoozeUntilMs: 0, researchQueue: [],
     researchCounts: { 'E-1': 0, 'E-2': 0, 'E-3': 0, 'CTRL': 0 },
     totalExerciseOrder: 0, lastCompletedDeltaEfi: null,
-    s4VasPromptedMins: new Set(),
+    s2VasPromptedMins: new Set(),
 
-    // S1-S3 Lab state
+    // S1 Distance & Alert Lab state
     s1Recording: false, s1Samples: [], s1MarkZone: null, s1MarkUtcMs: null, s1ChatterActive: false, s1ChatterCount: 0,
-    s2Recording: false, s2EndMs: 0, s2MediaRecorder: null, s2RecordedChunks: [], s2RecordedBlob: null, s2BlinkCount: 0, s2IncompleteCount: 0,
-    s3ActiveScenario: null, s3GtStartMs: null, s3DetStartDuringGt: null, s3TimerPausedFlag: false,
+
+    // Document PiP window
     pipWindow: null
   };
 
@@ -1292,17 +1264,17 @@
     $('diagBannerText').textContent = msg; b.style.display = 'flex';
   }
 
-  /* --- Automatic Developer Upload (Never sends video — strictly numeric JSON!) --- */
-  async function buildUnsyncedPayload(includeAll = false) {
+  /* --- Automatic Pseudonymous Numeric Sync (Zero Video Frames) --- */
+  async function buildPayload(includeAll = false) {
     const payload = {
       sent_utc: nowIso(),
-      app_version: 'EyeCare Monitor v0.6+ AutoSync',
+      app_version: 'EyeCare Monitor v0.6+ Desktop (S1-S4)',
       pid: STATE.passport.pid,
       vision: STATE.passport.vision,
       mode: STATE.mode,
       arm: STATE.arm,
-      device: STATE.deviceProfile,
-      calibration: STATE.calibrations[STATE.deviceProfile],
+      workstation: 'desktop',
+      calibration: STATE.calibration,
       data: {}
     };
     let count = 0;
@@ -1318,10 +1290,7 @@
   async function markPayloadSynced(payload) {
     for (const s of store.stores) {
       for (const r of (payload.data[s] || [])) {
-        if (r._id && !r._synced) {
-          r._synced = 1;
-          await store.put(s, r);
-        }
+        if (r._id && !r._synced) { r._synced = 1; await store.put(s, r); }
       }
     }
   }
@@ -1335,66 +1304,46 @@
     $('queueBadge').textContent = `Очередь: ${unsynced}`;
     const url = (STATE.webhookUrl || '').trim();
     if (!url) {
-      $('syncBadge').textContent = 'Локально';
-      $('syncBadge').className = 'badge';
-      $('uploadStatusLine').textContent = `Сохранено локально (${unsynced} зап.) · URL автоотправки не задан`;
+      $('syncBadge').textContent = 'Локально'; $('syncBadge').className = 'badge';
+      $('uploadStatusLine').textContent = `Сохранено локально (${unsynced} зап.)`;
     } else if (unsynced === 0 && STATE.lastSyncUtc) {
-      $('syncBadge').textContent = 'Синхронизировано ✓';
-      $('syncBadge').className = 'badge sage';
-      $('uploadStatusLine').textContent = `Отправлено разработчику (${STATE.lastSyncUtc.slice(11, 19)} UTC)`;
+      $('syncBadge').textContent = 'Синхронизировано ✓'; $('syncBadge').className = 'badge sage';
+      $('uploadStatusLine').textContent = `Отправлено (${STATE.lastSyncUtc.slice(11, 19)} UTC)`;
     } else {
-      $('syncBadge').textContent = `Автоотправка (${unsynced})`;
-      $('syncBadge').className = 'badge sage';
+      $('syncBadge').textContent = `Автоотправка (${unsynced})`; $('syncBadge').className = 'badge sage';
       $('uploadStatusLine').textContent = `Ожидают автоотправки: ${unsynced} зап.`;
     }
   }
 
   async function autoUploadToDeveloper(reason = 'auto', forceDownloadFallback = false) {
     const url = (STATE.webhookUrl || '').trim();
-    const { payload, count } = await buildUnsyncedPayload(false);
-
+    const { payload, count } = await buildPayload(false);
     if (!url) {
       await updateQueueCounter();
-      if (forceDownloadFallback) {
-        await exportJsonBundle();
-      }
+      if (forceDownloadFallback) await exportJsonBundle();
       return { ok: false, reason: 'no_url', count };
     }
-    if (count === 0 && reason === 'auto') {
-      await updateQueueCounter();
-      return { ok: true, count: 0 };
-    }
+    if (count === 0 && reason === 'auto') { await updateQueueCounter(); return { ok: true, count: 0 }; }
     if (STATE.syncBusy) return { ok: false, reason: 'busy' };
     STATE.syncBusy = true;
-    $('syncBadge').textContent = 'Отправка...';
-    $('syncBadge').className = 'badge amber';
+    $('syncBadge').textContent = 'Отправка...'; $('syncBadge').className = 'badge amber';
 
     const bodyStr = JSON.stringify(payload);
     let sent = false;
     try {
-      // text/plain avoids CORS preflight on Google Apps Script, n8n, and simple webhooks!
       const resp = await fetch(url, {
-        method: 'POST',
-        mode: 'cors',
-        keepalive: true,
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: bodyStr
+        method: 'POST', mode: 'cors', keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: bodyStr
       });
       if (resp && (resp.ok || resp.type === 'opaque')) sent = true;
     } catch {
-      // Retry with no-cors for Google Apps Script redirects that omit CORS headers
       try {
         await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          keepalive: true,
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: bodyStr
+          method: 'POST', mode: 'no-cors', keepalive: true,
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: bodyStr
         });
         sent = true;
-      } catch (e2) {
-        console.warn('Auto-upload failed, queued offline:', e2);
-      }
+      } catch (e2) { console.warn('Auto-upload deferred offline:', e2); }
     } finally {
       STATE.syncBusy = false;
     }
@@ -1403,12 +1352,12 @@
       STATE.lastSyncUtc = nowIso();
       await markPayloadSynced(payload);
       await updateQueueCounter();
-      if (reason !== 'auto') showToast(`Данные автоматически отправлены разработчику (${count} зап.).`);
+      if (reason !== 'auto') showToast(`Данные отправлены (${count} зап.).`);
       return { ok: true, count };
     } else {
       await updateQueueCounter();
       if (forceDownloadFallback) {
-        showToast('Нет сети для автоотправки — сохранён резервный JSON-файл.', 'amber');
+        showToast('Нет сети — сохранён резервный JSON-файл.', 'amber');
         await exportJsonBundle();
       }
       return { ok: false, count };
@@ -1418,30 +1367,20 @@
   function sendBeaconOnUnload() {
     const url = (STATE.webhookUrl || '').trim();
     if (!url || typeof navigator.sendBeacon !== 'function') return;
-    // Fast synchronous snapshot from in-memory active history + current session summary
     const quick = {
-      sent_utc: nowIso(),
-      beacon_unload: true,
-      pid: STATE.passport.pid,
-      mode: STATE.mode,
-      arm: STATE.arm,
-      device: STATE.deviceProfile,
-      session_active_sec: Math.round(STATE.sessionActiveSec),
-      breaks_today: STATE.breaksToday,
-      last_efi60: Number(STATE.currentEfi60.toFixed(1)),
-      recent_minutes: STATE.activeMinuteHistory.slice(-10)
+      sent_utc: nowIso(), beacon_unload: true,
+      pid: STATE.passport.pid, mode: STATE.mode, arm: STATE.arm, workstation: 'desktop',
+      session_active_sec: Math.round(STATE.sessionActiveSec), breaks_today: STATE.breaksToday,
+      last_efi60: Number(STATE.currentEfi60.toFixed(1)), recent_minutes: STATE.activeMinuteHistory.slice(-10)
     };
-    try {
-      navigator.sendBeacon(url, new Blob([JSON.stringify(quick)], { type: 'text/plain;charset=utf-8' }));
-    } catch {}
+    try { navigator.sendBeacon(url, new Blob([JSON.stringify(quick)], { type: 'text/plain;charset=utf-8' })); } catch {}
   }
 
   /* =========================================================================
-   * 5. CAMERA, MEDIAPIPE & INTERACTIVE AR CANVAS OVERLAY (FOR JURY!)
+   * 5. DESKTOP WEBCAM, MEDIAPIPE FACE LANDMARKER (WASM) & AR CANVAS HUD
    * ========================================================================= */
   function attachStreamToVideo(videoEl, stream) {
     videoEl.playsInline = true; videoEl.muted = true;
-    videoEl.setAttribute('playsinline', ''); videoEl.setAttribute('webkit-playsinline', '');
     videoEl.srcObject = stream;
     const p = videoEl.play();
     if (p && typeof p.catch === 'function') p.catch(() => {});
@@ -1454,11 +1393,11 @@
     let stream = null;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 20 } },
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 20 } },
         audio: false
       });
     } catch (err) {
-      if (err && (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError' || err.name === 'NotFoundError')) {
+      if (err && (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError')) {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       } else { throw err; }
     }
@@ -1473,17 +1412,17 @@
 
   function explainCamErr(err) {
     const n = (err && err.name) || (err && err.message) || '';
-    if (!window.isSecureContext) return 'Нужен HTTPS или localhost для доступа к камере (или нажмите «Демо»).';
-    if (n === 'NO_MEDIA_DEVICES') return 'Браузер не поддерживает камеру. Нажмите «Демо» для демонстрации.';
+    if (!window.isSecureContext) return 'Нужен защищённый контекст (HTTPS или localhost) для камеры (или нажмите «Демо»).';
+    if (n === 'NO_MEDIA_DEVICES') return 'Браузер не поддерживает getUserMedia(). Используйте Chrome, Edge, Firefox или Safari, либо нажмите «Демо».';
     if (n === 'NotAllowedError' || n === 'PermissionDeniedError') return 'Доступ к камере запрещён. Разрешите камеру в адресной строке браузера.';
-    if (n === 'NotReadableError' || n === 'TrackStartError') return 'Камера занята другой программой (Zoom/Meet/Telegram).';
-    if (n === 'NotFoundError') return 'Веб-камера не найдена. Используйте «Демо» для демонстрации.';
+    if (n === 'NotReadableError' || n === 'TrackStartError') return 'Камера занята другой программой (Zoom, Meet, Telegram). Освободите камеру и повторите.';
+    if (n === 'NotFoundError') return 'Веб-камера не обнаружена. Подключите камеру или используйте «Демо».';
     return 'Ошибка камеры: ' + (err && err.message ? err.message : String(err));
   }
 
   async function ensureLandmarker(forceCpu = false) {
     if (STATE.landmarker && !forceCpu) return STATE.landmarker;
-    $('hudEnginePill').textContent = 'Загрузка AI модели...';
+    $('hudEnginePill').textContent = 'Загрузка MediaPipe WASM...';
     let mod = null;
     for (const u of [
       'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs',
@@ -1491,7 +1430,7 @@
     ]) {
       try { mod = await import(u); if (mod && mod.FaceLandmarker) break; } catch {}
     }
-    if (!mod || !mod.FaceLandmarker) throw new Error('Не удалось загрузить MediaPipe (проверьте интернет или нажмите «Демо»).');
+    if (!mod || !mod.FaceLandmarker) throw new Error('Не удалось загрузить MediaPipe Tasks Vision (проверьте интернет или нажмите «Демо»).');
     const { FilesetResolver, FaceLandmarker } = mod;
     let fileset = null;
     for (const wp of [
@@ -1501,8 +1440,7 @@
       try { fileset = await FilesetResolver.forVisionTasks(wp); break; } catch {}
     }
     const modelUrl = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
-    const delegates = forceCpu ? ['CPU'] : ['GPU', 'CPU'];
-    for (const d of delegates) {
+    for (const d of (forceCpu ? ['CPU'] : ['GPU', 'CPU'])) {
       try {
         STATE.landmarker = await FaceLandmarker.createFromOptions(fileset, {
           baseOptions: { modelAssetPath: modelUrl, delegate: d },
@@ -1513,49 +1451,35 @@
         return STATE.landmarker;
       } catch {}
     }
-    throw new Error('Не удалось инициализировать MediaPipe Face Landmarker.');
+    throw new Error('MediaPipe Face Landmarker не удалось инициализировать ни на GPU, ни на CPU.');
   }
 
-  /* --- Exact object-fit: cover + horizontal mirror projection for AR Canvas --- */
-  function projectLandmarkToCanvas(pt, vw, vh, cw, ch) {
+  function projectToCanvas(pt, vw, vh, cw, ch) {
     const scale = Math.max(cw / vw, ch / vh);
     const drawW = vw * scale, drawH = vh * scale;
     const offX = (cw - drawW) / 2, offY = (ch - drawH) / 2;
-    // Mirror horizontally to match video CSS transform: scaleX(-1)
-    const x = offX + (1 - pt.x) * drawW;
-    const y = offY + pt.y * drawH;
-    return { x, y, scale };
+    return { x: offX + (1 - pt.x) * drawW, y: offY + pt.y * drawH };
   }
 
   function renderArOverlay() {
     const stage = $('camStage');
     if (stage.classList.contains('collapsed')) return;
-    const canvas = $('arCanvas');
-    const rect = stage.getBoundingClientRect();
+    const canvas = $('arCanvas'), rect = stage.getBoundingClientRect();
     if (rect.width < 10 || rect.height < 10) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cw = Math.round(rect.width * dpr);
-    const ch = Math.round(rect.height * dpr);
+    const cw = Math.round(rect.width * dpr), ch = Math.round(rect.height * dpr);
     if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, cw, ch);
 
-    // Demo Mode interactive stylized vector AR visualization so Jury sees live tracking without a camera!
-    if (STATE.demoMode) {
-      drawDemoVectorFaceHud(ctx, cw, ch, dpr);
-      return;
-    }
+    if (STATE.demoMode) { drawDemoVectorHud(ctx, cw, ch, dpr); return; }
 
     const lm = STATE.latestLandmarks;
     if (!lm || !STATE.facePresent) {
-      // Subtle scanning corners when waiting for face
       if (STATE.running) {
-        ctx.strokeStyle = 'rgba(229, 178, 99, 0.55)';
-        ctx.lineWidth = 2 * dpr;
+        ctx.strokeStyle = 'rgba(229, 178, 99, 0.55)'; ctx.lineWidth = 2 * dpr;
         ctx.setLineDash([6 * dpr, 6 * dpr]);
-        ctx.beginPath();
-        ctx.ellipse(cw / 2, ch / 2, cw * 0.21, ch * 0.34, 0, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cw/2, ch/2, cw*0.21, ch*0.34, 0, 0, Math.PI*2); ctx.stroke();
         ctx.setLineDash([]);
       }
       return;
@@ -1566,128 +1490,70 @@
     const flashing = performance.now() < STATE.blinkFlashUntilMs;
     const eyeColor = flashing ? (STATE.blinkFlashType === 'incomplete' ? '#F5B951' : '#5EF2B8') : zoneColor;
 
-    // 1. Draw both eye contours (6-point EAR polygons)
-    const eyePolys = [
-      [33, 160, 158, 133, 153, 144],   // Right eye
-      [362, 385, 387, 263, 373, 380]   // Left eye
-    ];
+    // 6-point EAR eyelid polygons
     ctx.lineWidth = (flashing ? 2.6 : 1.8) * dpr;
     ctx.strokeStyle = eyeColor;
     ctx.fillStyle = flashing ? 'rgba(115, 190, 159, 0.22)' : 'rgba(115, 190, 159, 0.08)';
-    for (const poly of eyePolys) {
+    for (const poly of [[33,160,158,133,153,144],[362,385,387,263,373,380]]) {
       ctx.beginPath();
-      poly.forEach((idx, i) => {
-        const p = projectLandmarkToCanvas(lm[idx], vw, vh, cw, ch);
-        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
-      });
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      poly.forEach((idx, i) => { const p = projectToCanvas(lm[idx], vw, vh, cw, ch); if (i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.closePath(); ctx.fill(); ctx.stroke();
     }
 
-    // 2. Draw glowing iris tracking rings (landmarks 468/469-471 and 473/474-476)
-    const irises = [
-      { c: 468, a: 469, b: 471 },
-      { c: 473, a: 474, b: 476 }
-    ];
-    for (const ir of irises) {
-      const pc = projectLandmarkToCanvas(lm[ir.c], vw, vh, cw, ch);
-      const pa = projectLandmarkToCanvas(lm[ir.a], vw, vh, cw, ch);
-      const pb = projectLandmarkToCanvas(lm[ir.b], vw, vh, cw, ch);
+    // Left/Right Iris tracking rings (landmarks 468/469-471 and 473/474-476)
+    for (const ir of [{ c:468, a:469, b:471 }, { c:473, a:474, b:476 }]) {
+      const pc = projectToCanvas(lm[ir.c], vw, vh, cw, ch);
+      const pa = projectToCanvas(lm[ir.a], vw, vh, cw, ch);
+      const pb = projectToCanvas(lm[ir.b], vw, vh, cw, ch);
       const r = Math.max(3 * dpr, Math.hypot(pa.x - pb.x, pa.y - pb.y) / 2);
-      ctx.beginPath();
-      ctx.arc(pc.x, pc.y, r, 0, Math.PI * 2);
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 1.6 * dpr;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(pc.x, pc.y, 2 * dpr, 0, Math.PI * 2);
-      ctx.fillStyle = zoneColor;
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(pc.x, pc.y, r, 0, Math.PI*2); ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
+      ctx.beginPath(); ctx.arc(pc.x, pc.y, 2 * dpr, 0, Math.PI*2); ctx.fillStyle = zoneColor; ctx.fill();
     }
 
-    // 3. Calibration silhouette guide while 3-second auto-calibration runs
     if (STATE.autoCalibActive) {
-      ctx.strokeStyle = '#73BE9F';
-      ctx.lineWidth = 2.5 * dpr;
-      ctx.setLineDash([8 * dpr, 5 * dpr]);
-      ctx.beginPath();
-      ctx.ellipse(cw / 2, ch / 2, cw * 0.20, ch * 0.34, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.strokeStyle = '#73BE9F'; ctx.lineWidth = 2.5 * dpr; ctx.setLineDash([8*dpr, 5*dpr]);
+      ctx.beginPath(); ctx.ellipse(cw/2, ch/2, cw*0.20, ch*0.34, 0, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
     }
   }
 
-  function drawDemoVectorFaceHud(ctx, cw, ch, dpr) {
-    // Rich interactive HUD in Demo Mode
-    ctx.fillStyle = '#121A20';
-    ctx.fillRect(0, 0, cw, ch);
-    // Subtle radar grid
-    ctx.strokeStyle = 'rgba(107, 179, 155, 0.08)';
-    ctx.lineWidth = 1 * dpr;
+  function drawDemoVectorHud(ctx, cw, ch, dpr) {
+    ctx.fillStyle = '#121A20'; ctx.fillRect(0, 0, cw, ch);
+    ctx.strokeStyle = 'rgba(107, 179, 155, 0.08)'; ctx.lineWidth = 1 * dpr;
     const step = 28 * dpr;
     for (let x = 0; x < cw; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke(); }
     for (let y = 0; y < ch; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
-
     if (STATE.demoPreset === 'away') {
-      ctx.fillStyle = '#E5B263';
-      ctx.font = `700 ${16 * dpr}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText('AWAY · Лицо вне кадра (таймеры на паузе)', cw / 2, ch / 2);
+      ctx.fillStyle = '#E5B263'; ctx.font = `700 ${16*dpr}px sans-serif`; ctx.textAlign = 'center';
+      ctx.fillText('AWAY · Лицо вне кадра (таймеры на паузе)', cw/2, ch/2);
       return;
     }
-
-    const scaleD = clamp(60 / Math.max(20, STATE.currentDistCm || 60), 0.65, 1.55);
-    const cx = cw / 2, cy = ch / 2;
-    const zoneColor = STATE.currentZone === 'red' ? '#EB8577' : (STATE.currentZone === 'yellow' ? '#E5B263' : '#73BE9F');
-
-    // Head oval
-    ctx.strokeStyle = zoneColor;
-    ctx.lineWidth = 2 * dpr;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 78 * dpr * scaleD, 102 * dpr * scaleD, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Dynamic eyes opening based on simulated EAR
-    const openRatio = clamp((STATE.rawEar || 0.28) / 0.30, 0.12, 1.0);
+    const sc = clamp(60 / Math.max(20, STATE.currentDistCm || 60), 0.65, 1.55);
+    const cx = cw/2, cy = ch/2;
+    const zc = STATE.currentZone === 'red' ? '#EB8577' : (STATE.currentZone === 'yellow' ? '#E5B263' : '#73BE9F');
+    ctx.strokeStyle = zc; ctx.lineWidth = 2 * dpr;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 78*dpr*sc, 102*dpr*sc, 0, 0, Math.PI*2); ctx.stroke();
+    const openR = clamp((STATE.rawEar || 0.28) / 0.30, 0.12, 1.0);
     for (const side of [-1, 1]) {
-      const ex = cx + side * 32 * dpr * scaleD;
-      const ey = cy - 10 * dpr * scaleD;
-      const rx = 20 * dpr * scaleD;
-      const ry = Math.max(2.5 * dpr, 11 * dpr * scaleD * openRatio);
-      ctx.beginPath();
-      ctx.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(115, 190, 159, 0.14)';
-      ctx.fill();
-      ctx.strokeStyle = zoneColor;
-      ctx.lineWidth = 2 * dpr;
-      ctx.stroke();
-      // Iris circle
-      if (openRatio > 0.25) {
-        ctx.beginPath();
-        ctx.arc(ex, ey, 7.5 * dpr * scaleD, 0, Math.PI * 2);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1.6 * dpr;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(ex, ey, 2.2 * dpr, 0, Math.PI * 2);
-        ctx.fillStyle = zoneColor;
-        ctx.fill();
+      const ex = cx + side*32*dpr*sc, ey = cy - 10*dpr*sc, rx = 20*dpr*sc, ry = Math.max(2.5*dpr, 11*dpr*sc*openR);
+      ctx.beginPath(); ctx.ellipse(ex, ey, rx, ry, 0, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(115, 190, 159, 0.14)'; ctx.fill(); ctx.strokeStyle = zc; ctx.stroke();
+      if (openR > 0.25) {
+        ctx.beginPath(); ctx.arc(ex, ey, 7.5*dpr*sc, 0, Math.PI*2); ctx.strokeStyle = '#FFF'; ctx.lineWidth = 1.6*dpr; ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex, ey, 2.2*dpr, 0, Math.PI*2); ctx.fillStyle = zc; ctx.fill();
       }
     }
   }
 
   /* =========================================================================
-   * 6. AUTOMATIC 3-SECOND CALIBRATION (ZERO EXTRA CLICKS)
+   * 6. AUTOMATED 3-SECOND SINGLE-POINT CALIBRATION (DESKTOP WORKSTATION)
    * ========================================================================= */
   function startAutoCalibration(refCm = 60) {
-    STATE.autoCalibActive = true;
-    STATE.autoCalibRefCm = refCm;
-    STATE.autoCalibSamples = [];
-    STATE.autoCalibEndMs = Date.now() + 3000;
+    STATE.autoCalibActive = true; STATE.autoCalibRefCm = refCm;
+    STATE.autoCalibSamples = []; STATE.autoCalibEndMs = Date.now() + 3000;
     STATE.calibrationAttempts++;
     const strip = $('calibStrip');
-    strip.textContent = `Автокалибровка: сядьте удобно (~${refCm} см) и смотрите на экран... 3`;
+    strip.textContent = `Автокалибровка (~${refCm} см): сядьте ровно и смотрите прямо... 3`;
     strip.classList.add('show');
   }
 
@@ -1697,29 +1563,23 @@
     const rem = Math.max(0, Math.ceil((STATE.autoCalibEndMs - tWall) / 1000));
     $('calibStrip').textContent = `Автокалибровка (~${STATE.autoCalibRefCm} см): смотрите прямо... ${rem}`;
     if (tWall >= STATE.autoCalibEndMs) {
-      STATE.autoCalibActive = false;
-      $('calibStrip').classList.remove('show');
+      STATE.autoCalibActive = false; $('calibStrip').classList.remove('show');
       const medIris = median(STATE.autoCalibSamples);
       if (medIris && medIris > 3) {
         const fpx = (medIris * STATE.autoCalibRefCm) / 1.17;
-        STATE.calibrations[STATE.deviceProfile] = {
-          d_ref: STATE.autoCalibRefCm,
-          f_px: Number(fpx.toFixed(1)),
-          iris_px: Number(medIris.toFixed(2)),
-          utc_ts: nowIso()
-        };
-        safeLSSet('ecm_calibrations_v2', STATE.calibrations);
+        STATE.calibration = { d_ref: STATE.autoCalibRefCm, f_px: Number(fpx.toFixed(1)), iris_px: Number(medIris.toFixed(2)), utc_ts: nowIso() };
+        safeLSSet('ecm_calibration_desktop', STATE.calibration);
         if (STATE.calibrationFirstTryOk === null) STATE.calibrationFirstTryOk = true;
-        showToast(`Автокалибровка готова (f_px = ${fpx.toFixed(0)} px). Мониторинг активен!`);
+        showToast(`Калибровка готова (D_ref=${STATE.autoCalibRefCm} см, f_px=${fpx.toFixed(0)} px).`);
       } else {
         if (STATE.calibrationAttempts === 1) STATE.calibrationFirstTryOk = false;
-        showToast('Лицо не попало в кадр при калибровке — используется стандартный профиль (можно нажать «Калибровка 3 с»).', 'amber');
+        showToast('Лицо не обнаружено при калибровке — повторите кнопкой «Калибровка (3 с)».', 'amber');
       }
     }
   }
 
   /* =========================================================================
-   * 7. ENGINE LOOP, CV PROCESSING, ERGONOMICS, EFI & EXERCISE ENGINE
+   * 7. ENGINE LOOP, CV PROCESSING, ERGONOMICS, EFI & ZERO-CLICK EXERCISES
    * ========================================================================= */
   function startInferenceLoop() {
     stopInferenceLoop();
@@ -1730,13 +1590,9 @@
       const code = `let iv=null; self.onmessage=(e)=>{ if(e.data==='start'){ clearInterval(iv); iv=setInterval(()=>self.postMessage('tick'), 65); } else if(e.data==='stop'){ clearInterval(iv); iv=null; } };`;
       const blob = new Blob([code], { type: 'application/javascript' });
       const url = URL.createObjectURL(blob);
-      STATE.worker = new Worker(url);
-      URL.revokeObjectURL(url);
-      STATE.worker.onmessage = tick;
-      STATE.worker.postMessage('start');
-    } catch {
-      STATE.fallbackTimer = setInterval(tick, 65);
-    }
+      STATE.worker = new Worker(url); URL.revokeObjectURL(url);
+      STATE.worker.onmessage = tick; STATE.worker.postMessage('start');
+    } catch { STATE.fallbackTimer = setInterval(tick, 65); }
     clearInterval(STATE.autoSyncTimer);
     STATE.autoSyncTimer = setInterval(() => { autoUploadToDeveloper('auto', false); }, AUTO_SYNC_INTERVAL_MS);
   }
@@ -1747,8 +1603,7 @@
     clearInterval(STATE.autoSyncTimer); STATE.autoSyncTimer = null;
   }
 
-  let tickBusy = false;
-  let cpuReinitBusy = false;
+  let tickBusy = false, cpuReinitBusy = false;
 
   async function onEngineTick() {
     if (tickBusy) return;
@@ -1770,8 +1625,6 @@
         if (STATE.fgFpsSamples.length > 600) STATE.fgFpsSamples.shift();
         if (STATE.bgFpsSamples.length > 600) STATE.bgFpsSamples.shift();
       }
-      if (STATE.s2Recording && !STATE.demoMode) drawS2RecordCanvasFrame();
-
       renderArOverlay();
       updateUI();
       updateMiniWidgets();
@@ -1795,9 +1648,8 @@
 
     const t0 = performance.now();
     let res = null;
-    try {
-      res = STATE.landmarker.detectForVideo(src, ts);
-    } catch (err) {
+    try { res = STATE.landmarker.detectForVideo(src, ts); }
+    catch {
       if (bmp && bmp.close) bmp.close();
       if (STATE.delegate === 'WASM GPU' && !cpuReinitBusy) {
         cpuReinitBusy = true; STATE.landmarker = null;
@@ -1851,6 +1703,15 @@
       const d = ctx.getImageData(0, 0, 32, 24).data;
       let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
       STATE.currentLuma = Math.round(s / (d.length / 4));
+      if ((STATE.currentLuma < 42 || STATE.currentLuma > 225) && tWall - STATE.lastLumaToastMs > 180000) {
+        STATE.lastLumaToastMs = tWall;
+        showToast(STATE.currentLuma < 42 ? tr('toastDark') : tr('toastBright'), 'amber');
+        store.add('alerts', {
+          utc_ts: nowIso(), pid: STATE.passport.pid, alert_type: STATE.currentLuma < 42 ? 'luma_dark' : 'luma_bright',
+          trigger_enter_utc: nowIso(), latency_ms: 0, dist_cm: STATE.currentDistCm !== null ? Number(STATE.currentDistCm.toFixed(1)) : null,
+          tab_state: document.hidden ? 'bg' : 'fg'
+        });
+      }
     } catch {}
   }
 
@@ -1858,8 +1719,7 @@
   function processDemoFrame(tPerf, tWall, dtSec) {
     STATE.frameCounter++; STATE.currentLuma = 128;
     if (STATE.demoPreset === 'away') { handlePresence(false, tWall, dtSec); return; }
-    const calib = STATE.calibrations[STATE.deviceProfile];
-    const fpx = calib ? calib.f_px : 1000;
+    const fpx = STATE.calibration ? STATE.calibration.f_px : 1000;
     let dTarget = 62, earOpenT = 0.29, bPeriod = 4.0, incProb = 0.08;
     if (STATE.demoPreset === 'yellow') dTarget = 40;
     else if (STATE.demoPreset === 'red') dTarget = 24;
@@ -1891,8 +1751,7 @@
 
   function updateDistance(irisPx, tWall, dtSec) {
     if (!irisPx || irisPx <= 1) return;
-    const calib = STATE.calibrations[STATE.deviceProfile];
-    const fpx = calib ? calib.f_px : 1000;
+    const fpx = STATE.calibration ? STATE.calibration.f_px : 1000;
     const rawD = clamp((1.17 * fpx) / irisPx, 12, 160);
     STATE.distBuffer.push({ t: tWall, d: rawD });
     while (STATE.distBuffer.length > 0 && tWall - STATE.distBuffer[0].t > 1500) STATE.distBuffer.shift();
@@ -1934,12 +1793,12 @@
     if (STATE.s1MarkZone === zone && STATE.s1MarkUtcMs) {
       const exp = (zone === 'yellow' ? STATE.settings.yellowDwellSec : STATE.settings.redDwellSec) * 1000;
       latencyMs = Math.max(0, (tWall - STATE.s1MarkUtcMs) - (escalated ? 0 : exp));
-      $('s1AlertTestOut').textContent = `Alert [${zone.toUpperCase()}]: latency = ${(latencyMs/1000).toFixed(2)} s (≤ 5 s)`;
+      $('s1AlertTestOut').textContent = `Alert [${zone.toUpperCase()}]: latency = ${(latencyMs/1000).toFixed(2)} s (target ≤ 5.0 s)`;
       STATE.s1MarkZone = null; STATE.s1MarkUtcMs = null;
     }
     if (STATE.s1ChatterActive) {
       STATE.s1ChatterCount++;
-      $('s1AlertTestOut').textContent = `48–52 cm test: alerts = ${STATE.s1ChatterCount}`;
+      $('s1AlertTestOut').textContent = `48–52 cm hysteresis test active: alerts = ${STATE.s1ChatterCount}`;
     }
     store.add('alerts', {
       utc_ts: nowIso(), pid: STATE.passport.pid, alert_type: zone,
@@ -1976,13 +1835,7 @@
           const incomplete = STATE.blinkMinEar >= (0.50 * openRef);
           STATE.blinkFlashUntilMs = performance.now() + 260;
           STATE.blinkFlashType = incomplete ? 'incomplete' : 'complete';
-          const ev = { startMs: STATE.blinkStartMs, endMs: tWall, durMs: Math.round(dur), incomplete, minEar: Number(STATE.blinkMinEar.toFixed(4)), earOpen: Number(openRef.toFixed(4)), maxBlend: Number(STATE.blinkMaxBlend.toFixed(3)) };
-          STATE.blinkEvents60s.push(ev);
-          if (STATE.s2Recording) {
-            STATE.s2BlinkCount++; if (incomplete) STATE.s2IncompleteCount++;
-            store.add('s2', { pid: STATE.passport.pid, start_utc: new Date(ev.startMs).toISOString(), end_utc: new Date(ev.endMs).toISOString(), duration_ms: ev.durMs, event_type: incomplete ? 'incomplete' : 'complete', min_ear: ev.minEar, ear_open: ev.earOpen, blend_max: ev.maxBlend });
-            updateS2UI();
-          }
+          STATE.blinkEvents60s.push({ startMs: STATE.blinkStartMs, endMs: tWall, durMs: Math.round(dur), incomplete });
         }
       }
     }
@@ -2011,7 +1864,6 @@
         if (!STATE.faceLostMs) STATE.faceLostMs = tWall;
         if (tWall - STATE.faceLostMs >= 3000) {
           STATE.isAway = true; STATE.facePresent = false; STATE.awayStartMs = STATE.faceLostMs;
-          if (STATE.s3ActiveScenario && !STATE.s3DetStartDuringGt) { STATE.s3DetStartDuringGt = STATE.awayStartMs; STATE.s3TimerPausedFlag = true; }
         }
       } else {
         STATE.minuteAwaySec += dtSec;
@@ -2024,12 +1876,13 @@
       STATE.sessionActiveSec += dtSec;
       STATE.workSinceBreakSec += dtSec;
       STATE.minuteActiveSec += dtSec;
+      // Study S2 automatic VAS 0–10 fatigue prompts at 0, 20, 40, and 60 min
       if (STATE.mode === 'research') {
         const mins = Math.floor(STATE.sessionActiveSec / 60);
         for (const cp of [0, 20, 40, 60]) {
-          if (mins >= cp && !STATE.s4VasPromptedMins.has(cp)) {
-            STATE.s4VasPromptedMins.add(cp);
-            if (!$('questOverlay').classList.contains('open')) openQuestModal('VAS_0_10', `S4_min${cp}`);
+          if (mins >= cp && !STATE.s2VasPromptedMins.has(cp)) {
+            STATE.s2VasPromptedMins.add(cp);
+            if (!$('questOverlay').classList.contains('open')) openQuestModal('VAS_0_10', `S2_min${cp}`);
           }
         }
       }
@@ -2038,9 +1891,8 @@
   }
 
   function updateMinuteBucket(tWall, dtSec) {
-    // Immediate smooth EFI preview every ~15 frames
     if (STATE.frameCounter % 15 === 0 && STATE.earOpen) {
-      const base = STATE.baselines[STATE.deviceProfile];
+      const base = STATE.baseline;
       if (base) {
         const relA = STATE.earOpen / Math.max(0.05, base.muEar);
         const sA = clip01(-((relA - base.muA) / base.sdA) / 3);
@@ -2066,14 +1918,14 @@
     let efiMin = STATE.currentEfiMin, relA = 1;
 
     if (activeS >= 25 && medEar) {
-      let base = STATE.baselines[STATE.deviceProfile];
+      let base = STATE.baseline;
       if (!base) {
         STATE.baselineSamples.push({ earOpen: medEar, ib: STATE.currentIB, br: STATE.currentBR });
         if (STATE.baselineSamples.length >= 3) {
           const ears = STATE.baselineSamples.map(x => x.earOpen), ibs = STATE.baselineSamples.map(x => x.ib), brs = STATE.baselineSamples.map(x => x.br);
           base = { muEar: mean(ears), muA: 1.0, sdA: Math.max(0.06, std(ears.map(v => v / mean(ears)))), muIB: mean(ibs), sdIB: Math.max(0.10, std(ibs)), muBR: mean(brs), sdBR: Math.max(3.0, std(brs)) };
-          STATE.baselines[STATE.deviceProfile] = base;
-          safeLSSet('ecm_baselines_v2', STATE.baselines);
+          STATE.baseline = base;
+          safeLSSet('ecm_baseline_desktop', base);
         }
       }
       if (base) {
@@ -2093,7 +1945,7 @@
         const h = Math.floor(l60.length / 2);
         STATE.currentEfiTrend = mean(l60.slice(h).map(x => x.efiMin)) - mean(l60.slice(0, h).map(x => x.efiMin));
       }
-      // Finalize ΔEFI / ΔIB (+2..+6 active minutes after exercise)
+      // Finalize ΔEFI / ΔIB over minutes +2..+6 post-break
       const still = [];
       for (const it of STATE.pendingDeltaEvents) {
         const st = it.histLenAtEnd + 1, en = it.histLenAtEnd + 6;
@@ -2104,7 +1956,7 @@
           it.record.delta_efi = it.record.efi_before !== null ? Number((it.record.efi_before - eA).toFixed(1)) : null;
           it.record.ib_after = Number((ibA * 100).toFixed(1));
           it.record.delta_ib = it.record.ib_before !== null ? Number((it.record.ib_before - ibA * 100).toFixed(1)) : null;
-          it.record._synced = 0; // re-sync updated delta
+          it.record._synced = 0;
           STATE.lastCompletedDeltaEfi = it.record.delta_efi;
           store.put('exercises', it.record);
         } else still.push(it);
@@ -2113,7 +1965,7 @@
     }
 
     store.add('minutes', {
-      utc_ts: nowIso(), pid: STATE.passport.pid, arm: STATE.arm, mode: STATE.mode, device: STATE.deviceProfile,
+      utc_ts: nowIso(), pid: STATE.passport.pid, arm: STATE.arm, mode: STATE.mode, workstation: 'desktop',
       active_sec: activeS, away_sec: awayS, dist_median_cm: medDist !== null ? Number(medDist.toFixed(1)) : null,
       zone_green_s: Math.round(STATE.minuteZoneSec.safe), zone_yellow_s: Math.round(STATE.minuteZoneSec.yellow), zone_red_s: Math.round(STATE.minuteZoneSec.red),
       ear_open_median: medEar ? Number(medEar.toFixed(4)) : null, rel_opening_a: Number(relA.toFixed(3)),
@@ -2129,7 +1981,7 @@
   }
 
   /* =========================================================================
-   * 8. AUTOMATIC ZERO-CLICK EXERCISE ENGINE & QUESTIONNAIRES
+   * 8. AUTOMATIC ZERO-CLICK EXERCISE ENGINE & QUESTIONNAIRES (S2/S3/S4)
    * ========================================================================= */
   function nextResearchCode() {
     if (!STATE.researchQueue.length) {
@@ -2262,7 +2114,7 @@
       if (ev.response === 'accepted') {
         STATE.breaksToday++; STATE.recentConditions.push(ev.condition);
         if (ev.condition === 'E-3') STATE.lastE3Ms = Date.now();
-        if (STATE.mode === 'research' && STATE.researchCounts[ev.condition] !== undefined) { STATE.researchCounts[ev.condition]++; updateS4UI(); }
+        if (STATE.mode === 'research' && STATE.researchCounts[ev.condition] !== undefined) { STATE.researchCounts[ev.condition]++; updateS2BlockUI(); }
       }
     }
     const id = await store.add('exercises', ev); ev._id = id;
@@ -2275,14 +2127,14 @@
     currentQuest = { scale, checkpoint: cp };
     const body = $('questBody'); body.innerHTML = '';
     if (scale === 'VAS_0_10') {
-      $('questTitle').textContent = `Усталость глаз (0–10) · ${cp}`;
-      $('questDesc').textContent = '0 — глаза абсолютно свежие, 10 — максимальная усталость.';
+      $('questTitle').textContent = `Самооценка усталости глаз (0–10) · ${cp}`;
+      $('questDesc').textContent = '0 — глаза абсолютно свежие, 10 — максимальная усталость прямо сейчас.';
       const w = document.createElement('div'); w.className = 'comfort-row';
       for (let i = 0; i <= 10; i++) { const l = document.createElement('label'); l.className = 'q-opt'; l.innerHTML = `<input type="radio" name="vas_s" value="${i}" ${i===3?'checked':''}> <strong>${i}</strong>`; w.appendChild(l); }
       body.appendChild(w);
     } else if (scale === 'CVS_Q') {
       $('questTitle').textContent = `CVS-Q (16 симптомов) · ${cp}`;
-      $('questDesc').textContent = 'Частота и интенсивность симптомов (порог CVS ≥ 6 баллов).';
+      $('questDesc').textContent = 'Укажите частоту и интенсивность симптомов (порог CVS ≥ 6 баллов, Seguí et al., 2015).';
       (CVSQ_ITEMS[STATE.lang] || CVSQ_ITEMS.ru).forEach((name, idx) => {
         const d = document.createElement('div'); d.className = 'q-item';
         d.innerHTML = `<div class="q-item-title">${idx+1}. ${name}</div>
@@ -2290,14 +2142,14 @@
             <label class="q-opt"><input type="radio" name="cf_${idx}" value="0" checked> Никогда (0)</label>
             <label class="q-opt"><input type="radio" name="cf_${idx}" value="1"> Иногда (1)</label>
             <label class="q-opt"><input type="radio" name="cf_${idx}" value="2"> Часто (2)</label></div>
-          <div class="q-options"><span class="metric-sub">Сила:</span>
+          <div class="q-options"><span class="metric-sub">Интенсивность:</span>
             <label class="q-opt"><input type="radio" name="ci_${idx}" value="1" checked> Умеренная (1)</label>
             <label class="q-opt"><input type="radio" name="ci_${idx}" value="2"> Сильная (2)</label></div>`;
         body.appendChild(d);
       });
     } else if (scale === 'OSDI') {
       $('questTitle').textContent = `OSDI (12 вопросов) · ${cp}`;
-      $('questDesc').textContent = 'Оцените симптомы за последнюю неделю (0 — никогда, 4 — всё время).';
+      $('questDesc').textContent = 'Оцените симптомы за последнюю неделю (0 — никогда, 4 — всё время; N/A — не применимо).';
       (OSDI_ITEMS[STATE.lang] || OSDI_ITEMS.ru).forEach((name, idx) => {
         const d = document.createElement('div'); d.className = 'q-item';
         d.innerHTML = `<div class="q-item-title">${idx+1}. ${name}</div><div class="q-options">
@@ -2310,8 +2162,8 @@
         body.appendChild(d);
       });
     } else if (scale === 'SUS') {
-      $('questTitle').textContent = `SUS (Удобство использования, 10 вопросов)`;
-      $('questDesc').textContent = '1 — полностью не согласен, 5 — полностью согласен (цель H6 ≥ 75).';
+      $('questTitle').textContent = `SUS (System Usability Scale, S4 · H5)`;
+      $('questDesc').textContent = '1 — полностью не согласен, 5 — полностью согласен (целевой показатель H5: ≥ 75 из 100).';
       (SUS_ITEMS[STATE.lang] || SUS_ITEMS.ru).forEach((t, idx) => {
         const d = document.createElement('div'); d.className = 'q-item';
         let opts = ''; for (let v = 1; v <= 5; v++) opts += `<label class="q-opt"><input type="radio" name="su_${idx}" value="${v}" ${v===4?'checked':''}> ${v}</label>`;
@@ -2358,13 +2210,13 @@
       total_score: total, efi_60_at_time: Number(STATE.currentEfi60.toFixed(1)), raw_answers_json: JSON.stringify(raw)
     });
     $('questOverlay').classList.remove('open');
-    showToast(`${scale} сохранён (${total}).`);
+    showToast(`${scale} (${checkpoint}) сохранён: ${total}`);
     refreshResearchTables();
     await autoUploadToDeveloper('questionnaire', false);
   }
 
   /* =========================================================================
-   * 9. RESEARCHER WIZARDS (S1-S6), MINI-WIDGET, EXPORTERS & UI UPDATES
+   * 9. STUDIES S1–S4 TOOLS, MINI-WIDGET, EXPORTERS & UI RENDERING
    * ========================================================================= */
   async function toggleMiniWidget() {
     if (STATE.pipWindow && !STATE.pipWindow.closed) { STATE.pipWindow.close(); STATE.pipWindow = null; return; }
@@ -2399,7 +2251,7 @@
     }
   }
 
-  // S1 10-second median distance capture
+  // Study S1: 10-second median distance capture
   function startS1Capture() {
     if (!STATE.running) { showToast('Сначала нажмите «Начать» (или «Демо»).', 'amber'); return; }
     if (STATE.s1Recording) return;
@@ -2414,8 +2266,14 @@
         clearInterval(iv); STATE.s1Recording = false; $('s1Record10sBtn').disabled = false;
         const med = median(STATE.s1Samples);
         if (med === null) { $('s1ProgressBadge').textContent = 'Нет лица'; return; }
-        const err = med - dRef, ape = Math.abs(err) / dRef * 100, cal = STATE.calibrations[STATE.deviceProfile];
-        await store.add('s1', { utc_ts: nowIso(), pid: STATE.passport.pid, device: STATE.deviceProfile, d_ref_cm: dRef, d_est_median_cm: Number(med.toFixed(2)), error_cm: Number(err.toFixed(2)), ape_pct: Number(ape.toFixed(2)), n_samples: STATE.s1Samples.length, glasses, lighting: light, lighting_luma: STATE.currentLuma, f_px: cal ? cal.f_px : null });
+        const err = med - dRef, ape = Math.abs(err) / dRef * 100;
+        await store.add('s1', {
+          utc_ts: nowIso(), pid: STATE.passport.pid, workstation: 'desktop',
+          d_ref_cm: dRef, d_est_median_cm: Number(med.toFixed(2)),
+          error_cm: Number(err.toFixed(2)), ape_pct: Number(ape.toFixed(2)),
+          n_samples: STATE.s1Samples.length, glasses, lighting: light,
+          lighting_luma: STATE.currentLuma, f_px: STATE.calibration ? STATE.calibration.f_px : null
+        });
         $('s1ProgressBadge').textContent = `${med.toFixed(1)} см (${err>=0?'+':''}${err.toFixed(1)})`;
         const sel = $('s1RefSelect'); if (sel.selectedIndex < sel.options.length - 1) sel.selectedIndex++;
         refreshS1Table(); updateQueueCounter();
@@ -2424,105 +2282,62 @@
   }
   async function refreshS1Table() {
     const rows = await store.getAll('s1'), tb = $('s1Tbody'); tb.innerHTML = '';
-    rows.slice(-20).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.utc_ts.slice(11,19)}</td><td>${r.d_ref_cm}</td><td>${r.d_est_median_cm}</td><td>${r.error_cm}</td><td>${r.ape_pct}%</td><td>${r.glasses}</td><td>${r.lighting}</td>`; tb.appendChild(trEl); });
-    $('s1LiveStats').textContent = rows.length ? `N=${rows.length} · MAE=${mean(rows.map(r=>Math.abs(r.error_cm))).toFixed(2)} см · MAPE=${mean(rows.map(r=>r.ape_pct)).toFixed(2)}%` : 'MAE: — · MAPE: —';
+    rows.slice(-20).reverse().forEach(r => {
+      const trEl = document.createElement('tr');
+      trEl.innerHTML = `<td>${r.utc_ts.slice(11,19)}</td><td>${r.d_ref_cm}</td><td>${r.d_est_median_cm}</td><td>${r.error_cm}</td><td>${r.ape_pct}%</td><td>${r.glasses}</td><td>${r.lighting}</td><td>${r.lighting_luma??'—'}</td>`;
+      tb.appendChild(trEl);
+    });
+    $('s1LiveStats').textContent = rows.length ? `N=${rows.length} · MAE=${mean(rows.map(r=>Math.abs(r.error_cm))).toFixed(2)} см (≤5) · MAPE=${mean(rows.map(r=>r.ape_pct)).toFixed(2)}% (≤10%)` : 'MAE: — см (цель ≤5) · MAPE: —% (цель ≤10%)';
   }
 
-  // S2 5-min blinks + optional local UTC video clip
-  let s2Iv = null;
-  function drawS2RecordCanvasFrame() {
-    const vid = $('camVideo'), c = $('recordCanvas');
-    if (!vid || vid.readyState < 2 || !c) return;
-    const ctx = c.getContext('2d'); ctx.drawImage(vid, 0, 0, c.width, c.height);
-    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(8, 8, 340, 28);
-    ctx.fillStyle = '#FFF'; ctx.font = 'bold 15px monospace'; ctx.fillText(`UTC ${nowIso()} | ${STATE.passport.pid}`, 14, 27);
-  }
-  function startS2() {
-    if (!STATE.running) { showToast('Сначала запустите камеру.', 'amber'); return; }
-    STATE.s2Recording = true; STATE.s2EndMs = Date.now() + 300000; STATE.s2BlinkCount = 0; STATE.s2IncompleteCount = 0;
-    $('s2StartBtn').disabled = true; $('s2StopBtn').disabled = false;
-    if (!STATE.demoMode && typeof MediaRecorder !== 'undefined') {
-      try {
-        const c = $('recordCanvas'), stream = c.captureStream ? c.captureStream(20) : STATE.stream;
-        let mime = ''; for (const m of ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']) { if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; break; } }
-        STATE.s2RecordedChunks = [];
-        STATE.s2MediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-        STATE.s2MediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) STATE.s2RecordedChunks.push(e.data); };
-        STATE.s2MediaRecorder.onstop = () => {
-          STATE.s2RecordedBlob = new Blob(STATE.s2RecordedChunks, { type: mime || 'video/webm' });
-          $('s2DownloadClipBtn').disabled = false; $('s2DeleteClipBtn').disabled = false;
-        };
-        STATE.s2MediaRecorder.start(1000);
-      } catch {}
-    }
-    clearInterval(s2Iv);
-    s2Iv = setInterval(() => {
-      const rem = Math.max(0, Math.ceil((STATE.s2EndMs - Date.now()) / 1000));
-      $('s2TimerBadge').textContent = fmtMMSS(rem);
-      if (rem <= 0) stopS2();
-    }, 500);
-    updateS2UI();
-  }
-  function stopS2() {
-    STATE.s2Recording = false; clearInterval(s2Iv); $('s2StartBtn').disabled = false; $('s2StopBtn').disabled = true;
-    if (STATE.s2MediaRecorder && STATE.s2MediaRecorder.state !== 'inactive') { try { STATE.s2MediaRecorder.stop(); } catch {} }
-    updateS2UI(); updateQueueCounter();
-  }
-  async function updateS2UI() {
-    $('s2StatsText').textContent = `Морганий: ${STATE.s2BlinkCount} (неполных: ${STATE.s2IncompleteCount})`;
-    const rows = await store.getAll('s2'), tb = $('s2Tbody'); tb.innerHTML = '';
-    rows.slice(-20).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.start_utc.slice(11,23)}</td><td>${r.end_utc.slice(11,23)}</td><td>${r.duration_ms}</td><td>${r.event_type}</td><td>${r.min_ear}/${r.ear_open}</td><td>${r.blend_max}</td>`; tb.appendChild(trEl); });
-  }
-
-  // S3 Scripted AWAY
-  async function handleS3(act) {
-    const t = Date.now();
-    if (act !== 'return') {
-      STATE.s3ActiveScenario = act; STATE.s3GtStartMs = t;
-      STATE.s3DetStartDuringGt = STATE.isAway ? STATE.awayStartMs : null; STATE.s3TimerPausedFlag = STATE.isAway;
-      $('s3ActiveScenario').textContent = `ACTIVE: ${act.toUpperCase()}`;
-    } else if (STATE.s3ActiveScenario && STATE.s3GtStartMs) {
-      const gt = (t - STATE.s3GtStartMs) / 1000, det = STATE.s3DetStartDuringGt ? Math.max(0, (t - STATE.s3DetStartDuringGt) / 1000) : 0;
-      await store.add('s3', { pid: STATE.passport.pid, scenario_type: STATE.s3ActiveScenario, gt_start_utc: new Date(STATE.s3GtStartMs).toISOString(), gt_end_utc: nowIso(), gt_dur_sec: Number(gt.toFixed(2)), det_dur_sec: Number(det.toFixed(2)), abs_err_sec: Number(Math.abs(det - gt).toFixed(2)), missed: STATE.s3DetStartDuringGt ? 0 : 1, timer_paused_ok: STATE.s3TimerPausedFlag ? 1 : 0 });
-      STATE.s3ActiveScenario = null; STATE.s3GtStartMs = null; STATE.s3DetStartDuringGt = null;
-      $('s3ActiveScenario').textContent = 'PRESENT';
-      refreshS3Table(); updateQueueCounter();
-    }
-  }
-  async function refreshS3Table() {
-    const rows = await store.getAll('s3'), tb = $('s3Tbody'); tb.innerHTML = '';
-    $('s3CountBadge').textContent = `${rows.length} / 10`;
-    rows.slice(-15).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.scenario_type}</td><td>${r.gt_start_utc.slice(11,19)}</td><td>${r.gt_dur_sec}</td><td>${r.det_dur_sec}</td><td>${r.abs_err_sec}</td><td>${r.timer_paused_ok?'Yes':'No'}</td>`; tb.appendChild(trEl); });
-  }
-  function updateS4UI() {
+  function updateS2BlockUI() {
     const c = STATE.researchCounts, tot = c['E-1'] + c['E-2'] + c['E-3'] + c['CTRL'];
-    $('s4BlockStats').textContent = `Блоки: E-1: ${c['E-1']} · E-2: ${c['E-2']} · E-3: ${c['E-3']} · CTRL: ${c['CTRL']} (${tot}/12)`;
+    $('s2BlockStats').textContent = `Блоки: E-1: ${c['E-1']} · E-2: ${c['E-2']} · E-3: ${c['E-3']} · CTRL: ${c['CTRL']} (${tot}/12)`;
   }
 
-  function runS6Audit() {
+  // Study S4: Desktop Usability, Browser Compatibility & WCAG 2.1 AA Audit
+  function runS4Audit() {
     const rel = h => { const rgb = [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255).map(v => v<=0.03928 ? v/12.92 : ((v+0.055)/1.055)**2.4); return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2]; };
     const ctr = (a,b) => ((Math.max(rel(a),rel(b))+0.05)/(Math.min(rel(a),rel(b))+0.05)).toFixed(2);
-    const fgM = STATE.fgFpsSamples.length ? mean(STATE.fgFpsSamples).toFixed(1) : '—', fgP = STATE.fgFpsSamples.length ? percentile(STATE.fgFpsSamples, 5).toFixed(1) : '—';
-    const bgM = STATE.bgFpsSamples.length ? mean(STATE.bgFpsSamples).toFixed(1) : '—', infM = STATE.infMsSamples.length ? mean(STATE.infMsSamples).toFixed(1) : '—';
+    const fgM = STATE.fgFpsSamples.length ? mean(STATE.fgFpsSamples).toFixed(1) : '—';
+    const fgSd = STATE.fgFpsSamples.length > 1 ? std(STATE.fgFpsSamples).toFixed(1) : '—';
+    const fgP = STATE.fgFpsSamples.length ? percentile(STATE.fgFpsSamples, 5).toFixed(1) : '—';
+    const bgM = STATE.bgFpsSamples.length ? mean(STATE.bgFpsSamples).toFixed(1) : '—';
+    const bgP = STATE.bgFpsSamples.length ? percentile(STATE.bgFpsSamples, 5).toFixed(1) : '—';
+    const infM = STATE.infMsSamples.length ? mean(STATE.infMsSamples).toFixed(1) : '—';
+
     $('auditOutput').textContent = [
-      `HTTPS/localhost: ${window.isSecureContext ? 'PASS' : 'FAIL'} | Viewport: ${window.innerWidth}x${window.innerHeight} (${STATE.deviceProfile})`,
-      `Engine: ${STATE.delegate} | WASM: ${typeof WebAssembly!=='undefined'?'OK':'NO'} | Worker: ${typeof Worker!=='undefined'?'OK':'NO'}`,
-      `Document PiP: ${'documentPictureInPicture' in window ? 'Native' : 'In-Page Fallback'} | Storage: ${store.usingMemory ? 'Memory' : 'IndexedDB'}`,
-      `WCAG 2.1 AA Contrast: Light ${ctr('#222927','#F4F2EC')}:1 (PASS) | Dark ${ctr('#E4EAE8','#13181C')}:1 (PASS)`,
-      `Perf: FG FPS=${fgM} (p05=${fgP}) | BG FPS=${bgM} | Inf=${infM} ms | Start=${STATE.onboardingSec ? STATE.onboardingSec.toFixed(1)+' s' : '—'}`
+      `Secure Context (HTTPS/localhost): ${window.isSecureContext ? 'PASS' : 'FAIL'} | Viewport: ${window.innerWidth}x${window.innerHeight} px`,
+      `Engine: ${STATE.delegate} | WASM: ${typeof WebAssembly!=='undefined'?'OK':'NO'} | Web Worker: ${typeof Worker!=='undefined'?'OK':'NO'}`,
+      `getUserMedia: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)?'OK':'NO'} | ImageCapture: ${typeof ImageCapture!=='undefined'?'OK':'Fallback'}`,
+      `Document PiP: ${'documentPictureInPicture' in window ? 'Native' : 'In-Page Fallback'} | Storage: ${store.usingMemory ? 'In-Memory Fallback' : 'IndexedDB (EyeCareMonitorDB_v2)'}`,
+      `WCAG 2.1 AA Contrast: Light (#222927 on #F4F2EC) ${ctr('#222927','#F4F2EC')}:1 (PASS ≥4.5:1) | Dark (#E4EAE8 on #13181C) ${ctr('#E4EAE8','#13181C')}:1 (PASS ≥4.5:1)`,
+      `Desktop Performance: FG FPS=${fgM} ± ${fgSd} (p05=${fgP}) | BG FPS=${bgM} (p05=${bgP}) | Inference=${infM} ms`,
+      `Onboarding (H5): Start=${STATE.onboardingSec ? STATE.onboardingSec.toFixed(1)+' s (≤60 s)' : '—'} | 3-s Auto-Calib attempts=${STATE.calibrationAttempts} (1st try OK: ${STATE.calibrationFirstTryOk ?? '—'})`
     ].join('\n');
-    store.add('s6', { utc_ts: nowIso(), pid: STATE.passport.pid, device: STATE.deviceProfile, viewport_px: `${window.innerWidth}x${window.innerHeight}`, user_agent: navigator.userAgent, onboarding_sec: STATE.onboardingSec ? Number(STATE.onboardingSec.toFixed(1)) : null, calibration_attempts: STATE.calibrationAttempts, calibration_first_try_ok: STATE.calibrationFirstTryOk, fps_fg_mean: STATE.fgFpsSamples.length ? Number(fgM) : null, fps_fg_p05: STATE.fgFpsSamples.length ? Number(fgP) : null, fps_bg_mean: STATE.bgFpsSamples.length ? Number(bgM) : null, inference_ms_mean: STATE.infMsSamples.length ? Number(infM) : null }).then(() => updateQueueCounter());
+
+    store.add('s4', {
+      utc_ts: nowIso(), pid: STATE.passport.pid, workstation: 'desktop',
+      viewport_px: `${window.innerWidth}x${window.innerHeight}`, user_agent: navigator.userAgent,
+      onboarding_sec: STATE.onboardingSec ? Number(STATE.onboardingSec.toFixed(1)) : null,
+      calibration_attempts: STATE.calibrationAttempts, calibration_first_try_ok: STATE.calibrationFirstTryOk,
+      fps_fg_mean: STATE.fgFpsSamples.length ? Number(fgM) : null,
+      fps_fg_sd: STATE.fgFpsSamples.length > 1 ? Number(fgSd) : null,
+      fps_fg_p05: STATE.fgFpsSamples.length ? Number(fgP) : null,
+      fps_bg_mean: STATE.bgFpsSamples.length ? Number(bgM) : null,
+      fps_bg_p05: STATE.bgFpsSamples.length ? Number(bgP) : null,
+      inference_ms_mean: STATE.infMsSamples.length ? Number(infM) : null
+    }).then(() => updateQueueCounter());
   }
 
+  // Exporters matching S1–S4 strictly
   const CSV_SCHEMAS = {
-    minutes: ['utc_ts','pid','arm','mode','device','active_sec','away_sec','dist_median_cm','zone_green_s','zone_yellow_s','zone_red_s','ear_open_median','rel_opening_a','br_per_min','ib_share','s_a','s_ib','s_br','efi_min','efi_60','efi_trend','luma','fps'],
+    minutes: ['utc_ts','pid','arm','mode','workstation','active_sec','away_sec','dist_median_cm','zone_green_s','zone_yellow_s','zone_red_s','ear_open_median','rel_opening_a','br_per_min','ib_share','s_a','s_ib','s_br','efi_min','efi_60','efi_trend','luma','fps'],
     alerts: ['utc_ts','pid','alert_type','trigger_enter_utc','latency_ms','dist_cm','tab_state'],
     exercises: ['utc_ts','pid','mode','condition','prev_condition','order_idx','response','efi_before','efi_after','delta_efi','ib_before','ib_after','delta_ib','comfort_pre','comfort_post'],
     questionnaires: ['utc_ts','pid','arm','checkpoint','scale','total_score','efi_60_at_time','raw_answers_json'],
-    s1: ['utc_ts','pid','device','d_ref_cm','d_est_median_cm','error_cm','ape_pct','n_samples','glasses','lighting','lighting_luma','f_px'],
-    s2: ['pid','start_utc','end_utc','duration_ms','event_type','min_ear','ear_open','blend_max'],
-    s3: ['pid','scenario_type','gt_start_utc','gt_end_utc','gt_dur_sec','det_dur_sec','abs_err_sec','missed','timer_paused_ok'],
-    s6: ['utc_ts','pid','device','viewport_px','user_agent','onboarding_sec','calibration_attempts','calibration_first_try_ok','fps_fg_mean','fps_fg_p05','fps_bg_mean','inference_ms_mean']
+    s1: ['utc_ts','pid','workstation','d_ref_cm','d_est_median_cm','error_cm','ape_pct','n_samples','glasses','lighting','lighting_luma','f_px'],
+    s4: ['utc_ts','pid','workstation','viewport_px','user_agent','onboarding_sec','calibration_attempts','calibration_first_try_ok','fps_fg_mean','fps_fg_sd','fps_fg_p05','fps_bg_mean','fps_bg_p05','inference_ms_mean']
   };
   async function exportCsv(name) {
     const rows = await store.getAll(name);
@@ -2531,25 +2346,40 @@
     downloadFile(`${pid}_${name}_${stamp}.csv`, toCsv(rows, CSV_SCHEMAS[name]), 'text/csv;charset=utf-8;');
   }
   async function exportJsonBundle() {
-    const { payload } = await buildUnsyncedPayload(true);
+    const { payload } = await buildPayload(true);
     const stamp = nowIso().slice(0, 16).replace(/[-:T]/g, '');
     const pid = (STATE.passport.pid || 'P01').replace(/[^A-Za-z0-9_-]/g, '');
-    downloadFile(`${pid}_EyeCare_Bundle_${stamp}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
-    showToast('JSON-файл с данными скачан.');
+    downloadFile(`${pid}_EyeCare_S1_S4_Bundle_${stamp}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+    showToast('JSON-пакет исследования скачан.');
   }
 
   async function refreshResearchTables() {
-    const exs = await store.getAll('exercises'), qs = await store.getAll('questionnaires'), mins = await store.getAll('minutes');
+    const exs = await store.getAll('exercises'), qs = await store.getAll('questionnaires'), mins = await store.getAll('minutes'), s1 = await store.getAll('s1'), s4 = await store.getAll('s4');
     const eTb = $('recentEventsTbody'); eTb.innerHTML = '';
-    exs.slice(-12).reverse().forEach(e => { const r = document.createElement('tr'); r.innerHTML = `<td>${e.utc_ts.slice(11,19)}</td><td><strong>${e.condition}</strong></td><td>${e.response}</td><td>${e.efi_before??'—'}</td><td>${e.efi_after??'wait'}</td><td>${e.delta_efi??'—'}</td><td>${e.delta_ib??'—'}</td>`; eTb.appendChild(r); });
+    exs.slice(-15).reverse().forEach(e => {
+      const r = document.createElement('tr');
+      r.innerHTML = `<td>${e.utc_ts.slice(11,19)}</td><td><strong>${e.condition}</strong></td><td>${e.response}</td><td>${e.efi_before??'—'}</td><td>${e.efi_after??'wait'}</td><td>${e.delta_efi??'—'}</td><td>${e.delta_ib??'—'}</td>`;
+      eTb.appendChild(r);
+    });
     const qTb = $('questTbody'); qTb.innerHTML = '';
-    qs.slice(-15).reverse().forEach(q => { const r = document.createElement('tr'); r.innerHTML = `<td>${q.utc_ts.slice(0,19).replace('T',' ')}</td><td>${q.pid}</td><td>${q.checkpoint}</td><td><strong>${q.scale}</strong></td><td>${q.total_score}</td>`; qTb.appendChild(r); });
-    $('exportCountsSummary').textContent = `В базе: minutes=${mins.length}, exercises=${exs.length}, questionnaires=${qs.length}`;
+    const vTb = $('s2VasTbody'); vTb.innerHTML = '';
+    qs.slice(-20).reverse().forEach(q => {
+      const r = document.createElement('tr');
+      r.innerHTML = `<td>${q.utc_ts.slice(0,19).replace('T',' ')}</td><td>${q.pid}</td><td>${q.arm}</td><td>${q.checkpoint}</td><td><strong>${q.scale}</strong></td><td>${q.total_score}</td>`;
+      qTb.appendChild(r);
+      if (q.scale === 'VAS_0_10') {
+        const vr = document.createElement('tr');
+        vr.innerHTML = `<td>${q.utc_ts.slice(11,19)}</td><td>${q.checkpoint}</td><td><strong>${q.total_score}</strong></td><td>${q.efi_60_at_time??'—'}</td>`;
+        vTb.appendChild(vr);
+      }
+    });
+    $('exportCountsSummary').textContent = `В базе: minutes=${mins.length}, exercises=${exs.length}, questionnaires=${qs.length}, S1=${s1.length}, S4=${s4.length}`;
   }
 
   function updateUI() {
     $('fpsBadge').textContent = `${STATE.currentFps.toFixed(0)} FPS`;
     $('activeTimeBadge').textContent = fmtMMSS(STATE.sessionActiveSec);
+    $('lumaBadge').textContent = `Luma: ${STATE.currentLuma !== null ? STATE.currentLuma : '—'}`;
     const pB = $('presenceBadge');
     if (!STATE.running) { pB.textContent = 'Ожидание'; pB.className = 'badge'; }
     else if (STATE.isAway) { pB.textContent = 'AWAY'; pB.className = 'badge amber'; }
@@ -2563,7 +2393,7 @@
     if (STATE.currentDistCm !== null && !STATE.isAway && STATE.running) {
       const d = STATE.currentDistCm, diopt = (100 / Math.max(12, d)).toFixed(2);
       $('distValue').textContent = String(Math.round(d));
-      $('diopterText').textContent = `Нагрузка: ${diopt} D`;
+      $('diopterText').textContent = `Аккомодация: ${diopt} D`;
       $('distMarker').style.left = clamp(((d - 15) / 85) * 100, 2, 98).toFixed(1) + '%';
       hudDist.textContent = `Дистанция: ${Math.round(d)} см (${diopt} D)`;
       hudDist.classList.add(STATE.currentZone);
@@ -2573,24 +2403,23 @@
       if (STATE.currentZone === 'red') {
         zb.textContent = tr('zoneRed'); zb.className = 'badge coral';
         const rem = STATE.zoneEnterMs ? Math.max(0, STATE.settings.redDwellSec - (Date.now() - STATE.zoneEnterMs) / 1000) : 0;
-        $('distCountdownText').textContent = `Очень близко (<30 см) · сигнал через ${Math.ceil(rem)} с`;
+        $('distCountdownText').textContent = `Красная зона (<30 см) · сигнал через ${Math.ceil(rem)} с`;
       } else if (STATE.currentZone === 'yellow') {
         zb.textContent = tr('zoneYellow'); zb.className = 'badge amber';
         const rem = STATE.zoneEnterMs ? Math.max(0, STATE.settings.yellowDwellSec - (Date.now() - STATE.zoneEnterMs) / 1000) : 0;
-        $('distCountdownText').textContent = `Близко (30–50 см) · сигнал через ${Math.ceil(rem)} с`;
+        $('distCountdownText').textContent = `Жёлтая зона (30–50 см) · сигнал через ${Math.ceil(rem)} с`;
       } else {
         zb.textContent = tr('zoneSafe'); zb.className = 'badge sage';
         $('distCountdownText').textContent = tr('distNormHint');
       }
     } else {
-      $('distValue').textContent = '—'; $('diopterText').textContent = 'Нагрузка: — D';
+      $('distValue').textContent = '—'; $('diopterText').textContent = 'Аккомодация: — D';
       hudDist.textContent = STATE.isAway ? 'AWAY (лицо вне кадра)' : 'Дистанция: — см';
     }
 
     $('hudBlinkPill').textContent = `Моргания: ${STATE.currentBR}/мин · EAR ${STATE.rawEar !== null ? STATE.rawEar.toFixed(2) : '—'}`;
     $('hudIrisPill').textContent = `Радужка: ${STATE.rawIrisPx !== null ? STATE.rawIrisPx.toFixed(1) : '—'} px`;
 
-    // EFI card
     const ev = Math.round(STATE.currentEfi60);
     $('efiGaugeNum').textContent = String(ev);
     $('efiArcPath').setAttribute('stroke-dashoffset', (126 * (1 - clamp(ev / 100, 0, 1))).toFixed(1));
@@ -2599,56 +2428,49 @@
     else if (ev >= 33) { $('efiArcPath').setAttribute('stroke', 'var(--amber)'); eb.className = 'badge amber'; $('efiBandLabel').textContent = tr('efiBuilding'); }
     else { $('efiArcPath').setAttribute('stroke', 'var(--sage)'); eb.className = 'badge sage'; $('efiBandLabel').textContent = tr('efiFresh'); }
 
-    const base = STATE.baselines[STATE.deviceProfile];
+    const prelim = STATE.activeMinuteHistory.length < 60 ? ' (предв.)' : '';
     $('blinkBriefText').textContent = `Моргания: ${STATE.currentBR}/мин · Неполные: ${Math.round(STATE.currentIB * 100)}%`;
-    $('efiMetaText').textContent = `Бейзлайн: ${base ? 'OK' : STATE.baselineSamples.length + '/3 мин'} · Тренд: ${STATE.currentEfiTrend >= 0 ? '+' : ''}${STATE.currentEfiTrend.toFixed(1)}`;
+    $('efiMetaText').textContent = `Бейзлайн: ${STATE.baseline ? 'OK' : STATE.baselineSamples.length + '/3 мин'} · Тренд: ${STATE.currentEfiTrend >= 0 ? '+' : ''}${STATE.currentEfiTrend.toFixed(1)}${prelim}`;
 
     const hist = STATE.activeMinuteHistory.slice(-60);
     if (hist.length >= 2) {
       $('efiSparkLinePoly').setAttribute('points', hist.map((h, i) => `${((i/(hist.length-1))*240).toFixed(1)},${(33-clamp(h.efiMin/100,0,1)*29).toFixed(1)}`).join(' '));
     }
 
-    // Rest timer card
     const tSec = STATE.settings.restIntervalMin * 60, remS = Math.max(0, tSec - STATE.workSinceBreakSec);
     $('restRingText').textContent = fmtMMSS(remS);
     $('restRingCircle').setAttribute('stroke-dashoffset', (201 * (1 - clamp(remS / Math.max(1, tSec), 0, 1))).toFixed(1));
     $('restStatusLabel').textContent = !STATE.running ? tr('restWaiting') : (STATE.isAway ? tr('restAway') : tr('restActive'));
     $('breaksCountLabel').textContent = `Перерывов: ${STATE.breaksToday} · ΔEFI: ${STATE.lastCompletedDeltaEfi !== null ? (STATE.lastCompletedDeltaEfi>=0?'+':'')+STATE.lastCompletedDeltaEfi : '—'}`;
-    $('nextExHintBadge').textContent = STATE.mode === 'research' ? 'Random S4' : (STATE.mode === 'pilot_silent' ? 'Silent' : 'Auto');
+    $('nextExHintBadge').textContent = STATE.mode === 'research' ? 'Random S2' : (STATE.mode === 'pilot_silent' ? 'Silent S3' : 'Auto');
 
-    const cal = STATE.calibrations[STATE.deviceProfile];
-    $('rawTelemetryLine').textContent = `EAR: ${STATE.rawEar?STATE.rawEar.toFixed(3):'—'} | open: ${STATE.earOpen?STATE.earOpen.toFixed(3):'—'} | Iris: ${STATE.rawIrisPx?STATE.rawIrisPx.toFixed(1):'—'} px | f_px: ${cal?cal.f_px:'1000'} | sA/sIB/sBR: ${STATE.currentSubScores.sA.toFixed(2)}/${STATE.currentSubScores.sIB.toFixed(2)}/${STATE.currentSubScores.sBR.toFixed(2)}`;
+    $('rawTelemetryLine').textContent = `EAR: ${STATE.rawEar?STATE.rawEar.toFixed(3):'—'} | open: ${STATE.earOpen?STATE.earOpen.toFixed(3):'—'} | Iris: ${STATE.rawIrisPx?STATE.rawIrisPx.toFixed(1):'—'} px | f_px: ${STATE.calibration?STATE.calibration.f_px:'default 1000'} | sA/sIB/sBR: ${STATE.currentSubScores.sA.toFixed(2)}/${STATE.currentSubScores.sIB.toFixed(2)}/${STATE.currentSubScores.sBR.toFixed(2)} | Baseline: ${STATE.baseline?'OK':STATE.baselineSamples.length+'/3m'}`;
   }
 
   function updateButtonsUI() {
     $('startStopBtn').textContent = (STATE.running && !STATE.demoMode) ? tr('stopBtn') : tr('startBtn');
     $('demoToggleBtn').textContent = STATE.demoMode ? tr('stopDemoBtn') : tr('demoShortBtn');
     $('silentBanner').style.display = STATE.mode === 'pilot_silent' ? 'flex' : 'none';
+    $('s3ArmBadge').textContent = STATE.arm === 'control' ? 'Control (Silent S3)' : 'Intervention (S3)';
     $('footerPidInfo').textContent = `PID: ${STATE.passport.pid} · ${STATE.mode}`;
   }
 
   /* =========================================================================
-   * 10. ONE-CLICK START / STOP / FINISH-AND-SEND FLOW
+   * 10. ONE-CLICK START / PAUSE / FINISH-AND-SEND FLOW
    * ========================================================================= */
-  async function startCameraSession(forceAutoCalib = false) {
+  async function startCameraSession(forceAutoCalib = false, refCm = 60) {
     audio.unlock();
     try {
       await requestCameraStream();
       $('camStartOverlay').classList.add('hidden');
       await ensureLandmarker(false);
-    } catch (err) {
-      showDiagBanner(explainCamErr(err), 'err');
-      return;
-    }
+    } catch (err) { showDiagBanner(explainCamErr(err), 'err'); return; }
     STATE.demoMode = false; $('demoBar').style.display = 'none';
     STATE.running = true;
     if (STATE.onboardingSec === null) STATE.onboardingSec = (performance.now() - STATE.pageLoadMs) / 1000;
     if (STATE.settings.soundEnabled && STATE.mode !== 'pilot_silent') audio.startKeepAlive();
     startInferenceLoop();
-    // Automatic 3-second zero-click calibration on first launch or if requested!
-    if (!STATE.calibrations[STATE.deviceProfile] || forceAutoCalib) {
-      startAutoCalibration(60);
-    }
+    if (!STATE.calibration || forceAutoCalib) startAutoCalibration(refCm);
     updateButtonsUI();
   }
 
@@ -2668,7 +2490,6 @@
     STATE.running = false; STATE.demoMode = false;
     $('demoBar').style.display = 'none';
     stopInferenceLoop(); audio.stopKeepAlive();
-    if (STATE.s2Recording) stopS2();
     if (STATE.stream) { STATE.stream.getTracks().forEach(t => t.stop()); STATE.stream = null; STATE.imageCapture = null; }
     $('camStartOverlay').classList.remove('hidden');
     updateButtonsUI(); updateUI();
@@ -2676,32 +2497,25 @@
 
   async function finishAndSendSession() {
     pauseSession();
-    // Save an S6 performance summary row automatically on session finish
-    runS6Audit();
+    runS4Audit();
     const res = await autoUploadToDeveloper('finish', true);
-    if (res.ok) {
-      showToast('Сессия завершена! Все данные автоматически отправлены разработчику.');
-    }
+    if (res.ok) showToast('Сессия завершена! Данные автоматически отправлены разработчику.');
   }
 
   /* =========================================================================
    * 11. EVENT BINDINGS & ZERO-FRICTION BOOT
    * ========================================================================= */
   function bindEvents() {
-    $('heroStartBtn').addEventListener('click', () => startCameraSession(false));
+    $('heroStartBtn').addEventListener('click', () => startCameraSession(false, 60));
     $('heroDemoBtn').addEventListener('click', startDemoSession);
-    $('startStopBtn').addEventListener('click', () => { if (STATE.running && !STATE.demoMode) pauseSession(); else startCameraSession(false); });
+    $('startStopBtn').addEventListener('click', () => { if (STATE.running && !STATE.demoMode) pauseSession(); else startCameraSession(false, 60); });
     $('demoToggleBtn').addEventListener('click', () => { if (STATE.demoMode) pauseSession(); else startDemoSession(); });
     $('triggerExerciseNowBtn').addEventListener('click', () => { audio.unlock(); openExerciseOverlay(selectExerciseCode(Date.now())); });
-    $('recalibQuickBtn').addEventListener('click', () => { if (!STATE.running || STATE.demoMode) startCameraSession(true); else startAutoCalibration(60); });
+    $('recalibQuickBtn').addEventListener('click', () => { if (!STATE.running || STATE.demoMode) startCameraSession(true, 60); else startAutoCalibration(60); });
     $('finishAndSendBtn').addEventListener('click', finishAndSendSession);
 
-    $('toggleVideoCollapseBtn').addEventListener('click', () => {
-      $('camStage').classList.add('collapsed'); $('collapsedCamNotice').style.display = 'flex';
-    });
-    $('expandVideoBtn').addEventListener('click', () => {
-      $('camStage').classList.remove('collapsed'); $('collapsedCamNotice').style.display = 'none';
-    });
+    $('toggleVideoCollapseBtn').addEventListener('click', () => { $('camStage').classList.add('collapsed'); $('collapsedCamNotice').style.display = 'flex'; });
+    $('expandVideoBtn').addEventListener('click', () => { $('camStage').classList.remove('collapsed'); $('collapsedCamNotice').style.display = 'none'; });
 
     $('themeToggleBtn').addEventListener('click', () => {
       STATE.theme = STATE.theme === 'light' ? 'dark' : 'light';
@@ -2714,12 +2528,11 @@
     $('pipBtn').addEventListener('click', toggleMiniWidget);
     $('closeMiniWidgetBtn').addEventListener('click', () => $('inPageMiniWidget').classList.remove('open'));
 
-    // Researcher drawer toggle (hidden by default for clean user UX)
     const toggleResearch = (open) => {
       const d = $('researchDrawer');
       const next = open !== undefined ? open : !d.classList.contains('open');
       d.classList.toggle('open', next);
-      if (next) { refreshResearchTables(); refreshS1Table(); updateS2UI(); refreshS3Table(); updateQueueCounter(); d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      if (next) { refreshResearchTables(); refreshS1Table(); updateS2BlockUI(); updateQueueCounter(); d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     };
     $('researchToggleBtn').addEventListener('click', () => toggleResearch());
     $('closeResearchBtn').addEventListener('click', () => toggleResearch(false));
@@ -2734,27 +2547,24 @@
 
     document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', () => { STATE.demoPreset = b.dataset.demo; showToast('Демо: ' + b.textContent); }));
 
-    // Exercise modal
     $('exInfoBtn').addEventListener('click', () => { const b = $('exEvidenceBox'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; });
     $('exStartActionBtn').addEventListener('click', () => { audio.unlock(); if (STATE.activeExerciseEvent && STATE.activeExerciseEvent.response === 'accepted') closeExercise('accepted'); else runExercise(); });
     $('exSnoozeBtn').addEventListener('click', () => closeExercise('snoozed'));
     $('exSkipBtn').addEventListener('click', () => closeExercise('skipped'));
 
-    // Away 10 min modal
     $('away10ContinueBtn').addEventListener('click', () => { $('away10Overlay').classList.remove('open'); STATE.away10PromptShown = false; });
     $('away10StopBtn').addEventListener('click', () => { $('away10Overlay').classList.remove('open'); finishAndSendSession(); });
 
-    // Questionnaire modal
     $('questCloseBtn').addEventListener('click', () => $('questOverlay').classList.remove('open'));
     $('questCancelBtn').addEventListener('click', () => $('questOverlay').classList.remove('open'));
     $('questSubmitBtn').addEventListener('click', submitQuest);
 
-    // Webhook & Link generator
+    // Webhook, Passport & Audio controls
     $('saveWebhookBtn').addEventListener('click', () => {
       STATE.webhookUrl = $('webhookUrlInput').value.trim();
       safeLSSet('ecm_webhook_url', STATE.webhookUrl);
       updateQueueCounter();
-      showToast(STATE.webhookUrl ? 'URL автоотправки сохранён.' : 'URL очищен (только локальное сохранение).');
+      showToast(STATE.webhookUrl ? 'URL автоотправки сохранён.' : 'URL очищен.');
     });
     $('sendNowTestBtn').addEventListener('click', () => autoUploadToDeveloper('manual', false));
     $('savePassportBtn').addEventListener('click', () => {
@@ -2764,59 +2574,64 @@
       STATE.arm = STATE.mode === 'pilot_silent' ? 'control' : 'intervention';
       STATE.settings.restIntervalMin = clamp(Number($('restIntervalInput').value) || 20, 5, 60);
       STATE.settings.soundEnabled = $('soundEnabledChk').checked;
-      safeLSSet('ecm_passport_v2', STATE.passport);
-      safeLSSet('ecm_settings_v2', STATE.settings);
+      safeLSSet('ecm_passport_desktop', STATE.passport);
+      safeLSSet('ecm_settings_desktop', STATE.settings);
       updateButtonsUI(); showToast('Параметры участника сохранены.');
     });
     $('copyParticipantLinkBtn').addEventListener('click', async () => {
       const base = window.location.href.split('?')[0];
-      const q = new URLSearchParams({
-        pid: $('pidInput').value.trim() || 'P01',
-        mode: $('studyModeSelect').value,
-        lang: STATE.lang
-      });
+      const q = new URLSearchParams({ pid: $('pidInput').value.trim() || 'P01', mode: $('studyModeSelect').value, lang: STATE.lang });
       const wh = $('webhookUrlInput').value.trim();
-      if (wh) q.set('webhook', wh);
+      if (wh && wh !== DEFAULT_WEBHOOK_URL) q.set('webhook', wh);
       const u = `${base}?${q.toString()}`;
-      try { await navigator.clipboard.writeText(u); showToast('Готовая ссылка для участника скопирована!'); }
+      try { await navigator.clipboard.writeText(u); showToast('Готовая ссылка участника скопирована!'); }
       catch { window.prompt('Скопируйте ссылку для участника:', u); }
     });
+    $('reqNotifBtn').addEventListener('click', async () => { const p = await audio.requestPermission(); showToast('Notifications API: ' + p); });
+    $('testYellowToneBtn').addEventListener('click', () => audio.playYellow());
+    $('testRedToneBtn').addEventListener('click', () => audio.playRed());
 
-    // S1-S6 controls
+    // Study S1
     $('s1Record10sBtn').addEventListener('click', startS1Capture);
-    $('s1MarkYellowBtn').addEventListener('click', () => { STATE.s1MarkZone = 'yellow'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен вход в Жёлтую...'; });
-    $('s1MarkRedBtn').addEventListener('click', () => { STATE.s1MarkZone = 'red'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен вход в Красную...'; });
+    $('s1CalibCustomBtn').addEventListener('click', () => {
+      const ref = Number($('s1CalibRefSelect').value) || 60;
+      if (!STATE.running || STATE.demoMode) startCameraSession(true, ref); else startAutoCalibration(ref);
+    });
+    $('s1MarkYellowBtn').addEventListener('click', () => { STATE.s1MarkZone = 'yellow'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен эталонный вход в Жёлтую (30–50 см)...'; });
+    $('s1MarkRedBtn').addEventListener('click', () => { STATE.s1MarkZone = 'red'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен эталонный вход в Красную (<30 см)...'; });
     $('s1ChatterTestBtn').addEventListener('click', () => {
       STATE.s1ChatterActive = true; STATE.s1ChatterCount = 0; $('s1AlertTestOut').textContent = 'Тест 48–52 см (60 с)...';
-      setTimeout(() => { STATE.s1ChatterActive = false; $('s1AlertTestOut').textContent = `Готово: ложных повторов = ${STATE.s1ChatterCount}`; }, 60000);
+      setTimeout(() => { STATE.s1ChatterActive = false; $('s1AlertTestOut').textContent = `Тест 48–52 см завершён: ложных повторов = ${STATE.s1ChatterCount} (цель = 0).`; }, 60000);
     });
     $('s1ClearBtn').addEventListener('click', async () => { await store.clearStore('s1'); refreshS1Table(); });
-    $('s2StartBtn').addEventListener('click', startS2);
-    $('s2StopBtn').addEventListener('click', stopS2);
-    $('s2DownloadClipBtn').addEventListener('click', () => { if (!STATE.s2RecordedBlob) return; const ext = STATE.s2RecordedBlob.type.includes('mp4')?'mp4':'webm'; downloadFile(`${STATE.passport.pid}_S2_${Date.now()}.${ext}`, STATE.s2RecordedBlob, STATE.s2RecordedBlob.type); });
-    $('s2DeleteClipBtn').addEventListener('click', () => { STATE.s2RecordedBlob = null; STATE.s2RecordedChunks = []; $('s2DownloadClipBtn').disabled = true; $('s2DeleteClipBtn').disabled = true; showToast('Видеоклип удалён.'); });
-    document.querySelectorAll('[data-s3]').forEach(b => b.addEventListener('click', () => handleS3(b.dataset.s3)));
-    window.addEventListener('keydown', (e) => {
-      if (!$('sub-s3').classList.contains('active') || !$('researchDrawer').classList.contains('open')) return;
-      if (['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-      const m = { '1':'leave','2':'turn_away','3':'hand_face','4':'phone_down','5':'return' };
-      if (m[e.key]) handleS3(m[e.key]);
-    });
-    $('s4EnableResearchBtn').addEventListener('click', () => { STATE.mode = 'research'; $('studyModeSelect').value = 'research'; updateButtonsUI(); showToast('Research Mode (S4) включён.'); });
-    $('s4TriggerNextBlockBtn').addEventListener('click', () => { audio.unlock(); openExerciseOverlay(nextResearchCode()); });
-    $('s4OpenVasBtn').addEventListener('click', () => openQuestModal('VAS_0_10', `S4_min${Math.floor(STATE.sessionActiveSec/60)}`));
-    $('openCvsqBtn').addEventListener('click', () => openQuestModal('CVS_Q', $('s5CheckpointSelect').value));
-    $('openOsdiBtn').addEventListener('click', () => openQuestModal('OSDI', $('s5CheckpointSelect').value));
-    $('openSusBtn').addEventListener('click', () => openQuestModal('SUS', 'S6_post'));
-    $('openSusBtn2').addEventListener('click', () => openQuestModal('SUS', 'S6_post'));
-    $('runAuditBtn').addEventListener('click', runS6Audit);
-    $('resetBaselineBtn').addEventListener('click', () => { STATE.baselines[STATE.deviceProfile] = null; STATE.baselineSamples = []; safeLSSet('ecm_baselines_v2', STATE.baselines); showToast('Бейзлайн сброшен.'); });
 
+    // Study S2
+    $('s2EnableResearchBtn').addEventListener('click', () => { STATE.mode = 'research'; $('studyModeSelect').value = 'research'; updateButtonsUI(); showToast('Research Mode (S2) включён.'); });
+    $('s2TriggerNextBlockBtn').addEventListener('click', () => { audio.unlock(); openExerciseOverlay(nextResearchCode()); });
+    $('s2OpenVasBtn').addEventListener('click', () => openQuestModal('VAS_0_10', `S2_min${Math.floor(STATE.sessionActiveSec/60)}`));
+    $('s2OpenCvsqBtn').addEventListener('click', () => openQuestModal('CVS_Q', 'S2_session'));
+
+    // Study S3
+    $('openCvsqBtn').addEventListener('click', () => openQuestModal('CVS_Q', $('s3CheckpointSelect').value));
+    $('openOsdiBtn').addEventListener('click', () => openQuestModal('OSDI', $('s3CheckpointSelect').value));
+    $('switchSilentBtn').addEventListener('click', () => {
+      STATE.mode = STATE.mode === 'pilot_silent' ? 'standard' : 'pilot_silent';
+      STATE.arm = STATE.mode === 'pilot_silent' ? 'control' : 'intervention';
+      $('studyModeSelect').value = STATE.mode;
+      updateButtonsUI();
+    });
+
+    // Study S4
+    $('openSusBtn').addEventListener('click', () => openQuestModal('SUS', 'S4_post'));
+    $('runAuditBtn').addEventListener('click', runS4Audit);
+    $('resetBaselineBtn').addEventListener('click', () => { STATE.baseline = null; STATE.baselineSamples = []; safeLSSet('ecm_baseline_desktop', null); showToast('3-минутный бейзлайн EFI сброшен.'); });
+
+    // Export
     $('exportAllJsonBtn').addEventListener('click', exportJsonBundle);
     document.querySelectorAll('[data-export]').forEach(b => b.addEventListener('click', () => exportCsv(b.dataset.export)));
-    $('wipeDbBtn').addEventListener('click', async () => { if (!confirm('Очистить локальную базу?')) return; await store.wipeAll(); STATE.activeMinuteHistory = []; refreshResearchTables(); refreshS1Table(); updateS2UI(); refreshS3Table(); updateQueueCounter(); });
+    $('wipeDbBtn').addEventListener('click', async () => { if (!confirm('Очистить локальную базу данных?')) return; await store.wipeAll(); STATE.activeMinuteHistory = []; refreshResearchTables(); refreshS1Table(); updateQueueCounter(); });
 
-    // Background / unload resilience across desktop & mobile browsers
+    // Visibility & unload resilience
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && STATE.running) {
         audio.unlock();
@@ -2837,18 +2652,14 @@
     const savedLang = safeLSGet('ecm_lang', null);
     if (savedLang && I18N[savedLang]) STATE.lang = savedLang;
 
-    // Auto-read pre-configured participant link parameters (zero setup for test users!)
     const p = new URLSearchParams(window.location.search);
-    if (p.get('pid')) { STATE.passport.pid = p.get('pid'); safeLSSet('ecm_passport_v2', STATE.passport); }
+    if (p.get('pid')) { STATE.passport.pid = p.get('pid'); safeLSSet('ecm_passport_desktop', STATE.passport); }
     if (p.get('lang') && I18N[p.get('lang')]) STATE.lang = p.get('lang');
     if (p.get('mode') && ['standard','research','pilot_silent'].includes(p.get('mode'))) {
       STATE.mode = p.get('mode');
       STATE.arm = STATE.mode === 'pilot_silent' ? 'control' : 'intervention';
     }
-    if (p.get('webhook')) {
-      STATE.webhookUrl = p.get('webhook');
-      safeLSSet('ecm_webhook_url', STATE.webhookUrl);
-    }
+    if (p.get('webhook')) { STATE.webhookUrl = p.get('webhook'); safeLSSet('ecm_webhook_url', STATE.webhookUrl); }
     if (p.get('researcher') === '1') $('researchDrawer').classList.add('open');
 
     $('langSelect').value = STATE.lang;
@@ -2865,16 +2676,19 @@
     updateUI();
     await updateQueueCounter();
 
-    if (!window.isSecureContext) showDiagBanner('Откройте через HTTPS или localhost — иначе браузер заблокирует камеру (для показа без сервера нажмите «Демо»).', 'warn');
-    else if (detectWebView()) showDiagBanner('Открыто внутри мессенджера — откройте в Chrome или Safari для стабильной камеры.', 'warn');
+    if (!window.isSecureContext) {
+      showDiagBanner('Откройте через HTTPS или localhost — иначе браузер заблокирует веб-камеру (для показа без сервера нажмите «Демо»).', 'warn');
+    } else if (isHandheldUA()) {
+      showDiagBanner('Исследование EyeCare Monitor предназначено для ноутбуков и настольных ПК. Для участия в тестировании S1–S4 откройте эту ссылку в браузере на ноутбуке.', 'warn');
+    } else if (detectWebView()) {
+      showDiagBanner('Страница открыта во встроенном браузере — откройте её в Chrome, Edge, Firefox или Safari.', 'warn');
+    }
 
-    // Auto-start live webcam immediately if browser already has camera permission granted!
+    // Auto-start live desktop webcam if permission was previously granted
     try {
-      if (navigator.permissions && navigator.permissions.query) {
+      if (navigator.permissions && navigator.permissions.query && window.isSecureContext && !isHandheldUA()) {
         const st = await navigator.permissions.query({ name: 'camera' });
-        if (st && st.state === 'granted' && window.isSecureContext) {
-          startCameraSession(false);
-        }
+        if (st && st.state === 'granted') startCameraSession(false, 60);
       }
     } catch {}
   }
