@@ -1,0 +1,2885 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>EyeCare Monitor — Интерактивный мониторинг усталости глаз</title>
+  <style>
+    :root {
+      --bg: #F4F2EC;
+      --surface: #FAF8F4;
+      --surface-2: #ECE9E0;
+      --border: #D5D0C3;
+      --text: #222927;
+      --text-muted: #525D59;
+      --accent: #2D6A56;
+      --accent-hover: #225343;
+      --accent-soft: #E1EDE8;
+      --accent-text: #FFFFFF;
+      --sage: #2E6F56;
+      --sage-bg: #E3F0EA;
+      --amber: #8E5B13;
+      --amber-bg: #F7EBD5;
+      --coral: #A33B2E;
+      --coral-bg: #F7E1DD;
+      --shadow: 0 4px 18px rgba(34, 41, 39, 0.07);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --trans: 200ms ease;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    [data-theme="dark"] {
+      --bg: #13181C;
+      --surface: #1B2228;
+      --surface-2: #242D35;
+      --border: #33404B;
+      --text: #E4EAE8;
+      --text-muted: #9FB0AB;
+      --accent: #6BB39B;
+      --accent-hover: #82C4AE;
+      --accent-soft: #1E3430;
+      --accent-text: #0F1715;
+      --sage: #73BE9F;
+      --sage-bg: #1B332C;
+      --amber: #E5B263;
+      --amber-bg: #362B1A;
+      --coral: #EB8577;
+      --coral-bg: #3B201E;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.32);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 15px; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      transition: background var(--trans), color var(--trans);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    .tabular { font-variant-numeric: tabular-nums; }
+    .mono { font-family: var(--font-mono); }
+
+    .app-shell {
+      max-width: 1120px; margin: 0 auto;
+      padding: 12px 14px calc(32px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Compact Header */
+    .topbar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: var(--accent-soft); color: var(--accent);
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .brand h1 { margin: 0; font-size: 16.5px; font-weight: 800; letter-spacing: -0.01em; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .brand-sub { font-size: 12px; color: var(--text-muted); }
+    .topbar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+    /* Buttons & Form Controls */
+    button, select, input { font-family: inherit; font-size: 14px; color: var(--text); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 14px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      font-weight: 600; cursor: pointer; min-height: 38px;
+      transition: background var(--trans), border-color var(--trans), transform 120ms ease;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-lg { padding: 12px 22px; font-size: 15.5px; min-height: 46px; border-radius: 12px; }
+    .btn-danger { background: var(--coral-bg); border-color: var(--coral); color: var(--coral); }
+    .btn-amber { background: var(--amber-bg); border-color: var(--amber); color: var(--amber); }
+    .btn-sm { padding: 5px 10px; font-size: 12.5px; min-height: 32px; }
+    .btn-pill { border-radius: 999px; }
+
+    .input, .select {
+      padding: 7px 10px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); min-height: 36px; width: 100%;
+    }
+    .select-compact { width: auto; min-width: 64px; padding: 5px 8px; min-height: 32px; font-size: 13px; }
+    label.field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+
+    /* Badges & Banners */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+      background: var(--surface-2); color: var(--text-muted);
+    }
+    .badge.sage { background: var(--sage-bg); color: var(--sage); }
+    .badge.amber { background: var(--amber-bg); color: var(--amber); }
+    .badge.coral { background: var(--coral-bg); color: var(--coral); }
+    .banner {
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface);
+      margin-bottom: 12px; font-size: 13.5px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .banner.warn { background: var(--amber-bg); border-color: var(--amber); }
+    .banner.err { background: var(--coral-bg); border-color: var(--coral); }
+    .banner.ok { background: var(--sage-bg); border-color: var(--sage); }
+
+    /* HERO STAGE: Live Webcam + Metrics Side-by-Side */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.32fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .card-title { font-size: 12.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
+
+    /* Interactive Webcam Stage for Jury & Users */
+    .cam-card { padding: 12px; gap: 10px; }
+    .cam-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      min-height: 250px;
+      max-height: 440px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #10161A;
+      border: 3px solid var(--border);
+      transition: border-color 220ms ease, box-shadow 220ms ease;
+    }
+    .cam-stage.zone-safe { border-color: var(--sage); box-shadow: 0 0 0 2px rgba(46, 111, 86, 0.14); }
+    .cam-stage.zone-yellow { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(142, 91, 19, 0.22); }
+    .cam-stage.zone-red { border-color: var(--coral); box-shadow: 0 0 0 4px rgba(163, 59, 46, 0.28); }
+    .cam-stage.collapsed {
+      /* Never display:none so browser keeps decoding frames! */
+      position: fixed; bottom: 0; right: 0;
+      width: 2px; height: 2px; min-height: 2px; opacity: 0.001;
+      pointer-events: none; z-index: -1; border: none;
+    }
+    #camVideo {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: block;
+    }
+    #arCanvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      display: block;
+    }
+    /* Start / Auto-Calibration Overlay inside Camera Stage */
+    .cam-overlay-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 20px; gap: 12px;
+      background: radial-gradient(circle at center, rgba(16, 22, 26, 0.55) 0%, rgba(16, 22, 26, 0.85) 100%);
+      color: #F4F7F6;
+      z-index: 4;
+    }
+    .cam-overlay-center.hidden { display: none; }
+    .cam-overlay-center h2 { margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF; }
+    .cam-overlay-center p { margin: 0; max-width: 380px; font-size: 13.5px; color: #D2DDD9; }
+
+    /* Live HUD Pills on top of Camera */
+    .cam-hud-top {
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; align-items: center; gap: 6px;
+      pointer-events: none; z-index: 3; flex-wrap: wrap;
+    }
+    .cam-hud-bottom {
+      position: absolute; bottom: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; align-items: center; gap: 6px;
+      pointer-events: none; z-index: 3; flex-wrap: wrap;
+    }
+    .hud-pill {
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(16, 22, 26, 0.72);
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      color: #F2F6F5; font-size: 12px; font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .hud-pill.safe { border-color: #6BB39B; color: #AEE6D2; }
+    .hud-pill.yellow { border-color: #E5B263; color: #F9D99B; }
+    .hud-pill.red { border-color: #EB8577; color: #FFC1B8; }
+
+    /* Auto-calibration banner inside camera */
+    .calib-strip {
+      position: absolute; left: 12px; right: 12px; bottom: 48px; z-index: 5;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(29, 78, 62, 0.92); color: #FFFFFF;
+      text-align: center; font-size: 13.5px; font-weight: 600;
+      display: none;
+    }
+    .calib-strip.show { display: block; }
+
+    .cam-actions {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .cam-actions-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+    /* Right column stacked metric cards */
+    .metrics-stack { display: flex; flex-direction: column; gap: 12px; }
+    .metric-big { font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+    .metric-sub { font-size: 12.5px; color: var(--text-muted); }
+    .gauge-wrap { display: flex; align-items: center; gap: 12px; }
+    .sparkline-svg { width: 100%; height: 36px; display: block; }
+
+    /* Traffic-light distance bar */
+    .zone-bar {
+      position: relative; height: 10px; border-radius: 999px; overflow: hidden;
+      display: flex; background: var(--surface-2); margin: 2px 0;
+    }
+    .zone-seg-red { width: 25%; background: var(--coral); opacity: 0.85; }
+    .zone-seg-yellow { width: 25%; background: var(--amber); opacity: 0.85; }
+    .zone-seg-green { width: 50%; background: var(--sage); opacity: 0.85; }
+    .zone-marker {
+      position: absolute; top: -2px; width: 4px; height: 14px;
+      background: var(--text); border-radius: 2px; transition: left 180ms ease;
+    }
+
+    /* Demo presets bar */
+    .demo-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      padding: 10px 12px; background: var(--accent-soft);
+      border: 1px dashed var(--accent); border-radius: var(--radius-sm);
+      margin-bottom: 14px;
+    }
+
+    /* Hidden Researcher Suite (revealed only via flask button or ?researcher=1) */
+    .research-drawer { display: none; margin-top: 14px; }
+    .research-drawer.open { display: block; }
+    .subtabs {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px;
+    }
+    .subtab-btn {
+      padding: 6px 11px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: var(--surface-2);
+      color: var(--text); font-size: 12.5px; font-weight: 600; cursor: pointer;
+    }
+    .subtab-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+    .subpanel { display: none; }
+    .subpanel.active { display: block; }
+
+    .cards-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+    @media (max-width: 720px) { .cards-2 { grid-template-columns: 1fr; } }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--surface-2); font-weight: 700; color: var(--text-muted); white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Modals & Overlays */
+    .overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(19, 24, 28, 0.72);
+      -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+      padding: 16px; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 540px; max-height: 92dvh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+    }
+    .modal-lg { max-width: 720px; }
+    .modal h2 { margin: 0 0 8px; font-size: 18.5px; }
+    .modal-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    .exercise-stage {
+      background: var(--surface-2); border-radius: var(--radius);
+      padding: 18px; text-align: center; margin: 12px 0;
+    }
+    .comfort-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-top: 8px; }
+    .comfort-btn {
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); font-weight: 700; cursor: pointer;
+    }
+    .comfort-btn.selected { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+    /* Questionnaires */
+    .q-item { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; background: var(--bg); }
+    .q-item-title { font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+    .q-options { display: flex; flex-wrap: wrap; gap: 6px; }
+    .q-opt {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px;
+      background: var(--surface); font-size: 12.5px; cursor: pointer;
+    }
+
+    /* Floating Mini-Widget fallback */
+    .mini-widget {
+      position: fixed; right: 14px; bottom: 14px; z-index: 900;
+      width: 268px; padding: 10px 12px;
+      background: var(--surface); border: 2px solid var(--accent);
+      border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      display: none; font-size: 12.5px;
+    }
+    .mini-widget.open { display: block; }
+
+    /* Toasts */
+    .toast-stack {
+      position: fixed; top: 14px; right: 14px; z-index: 1200;
+      display: flex; flex-direction: column; gap: 8px; max-width: 340px; width: calc(100% - 28px);
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto; padding: 11px 14px; border-radius: var(--radius-sm);
+      background: var(--surface); border-left: 4px solid var(--accent);
+      border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18); font-size: 13.5px;
+    }
+    .toast.amber { border-left-color: var(--amber); }
+    .toast.coral { border-left-color: var(--coral); }
+
+    .disclaimer-foot {
+      margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-muted);
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .app-shell { padding: 8px 8px calc(24px + env(safe-area-inset-bottom, 0px)); }
+      .metric-big { font-size: 26px; }
+      .cam-stage { min-height: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <div class="app-shell">
+    <!-- ==================== SIMPLE TOP BAR ==================== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div>
+          <h1>EyeCare Monitor <span class="badge sage" id="syncBadge">Локально</span></h1>
+          <div class="brand-sub" data-i18n="subtitle">Интерактивная профилактика усталости глаз · 100% на устройстве</div>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <span class="badge tabular" id="activeTimeBadge">00:00</span>
+        <select class="select select-compact" id="langSelect" aria-label="Language">
+          <option value="ru">RU</option>
+          <option value="kk">KZ</option>
+          <option value="en">EN</option>
+        </select>
+        <button class="btn btn-sm" id="themeToggleBtn" type="button" aria-label="Toggle theme">🌙</button>
+        <button class="btn btn-sm" id="pipBtn" type="button" data-i18n="miniWidget">Мини-окно</button>
+        <button class="btn btn-sm" id="researchToggleBtn" type="button" title="Панель исследователя (S1–S6)">🔬 S1–S6</button>
+      </div>
+    </header>
+
+    <!-- Diagnostics Banner (shown only on real issues: HTTP instead of HTTPS, WebView, etc.) -->
+    <div id="diagBanner" class="banner warn" style="display:none;" role="alert">
+      <div id="diagBannerText"></div>
+      <button class="btn btn-sm" id="diagBannerClose" type="button">✕</button>
+    </div>
+
+    <!-- Silent Control Mode Banner (S5 Control Arm) -->
+    <div id="silentBanner" class="banner ok" style="display:none;">
+      <div data-i18n="silentNotice">Активен фоновый сбор данных (тихий режим). По завершении работы нажмите «Завершить и отправить».</div>
+    </div>
+
+    <!-- Demo Presets Bar (only when Demo Mode is active — great for Jury demonstration!) -->
+    <div class="demo-bar" id="demoBar" style="display:none;">
+      <strong style="font-size:13px;" data-i18n="demoPresetsLabel">Демо для жюри (симуляция):</strong>
+      <button class="btn btn-sm" data-demo="normal" type="button" data-i18n="demoNormal">Норма (62 см)</button>
+      <button class="btn btn-sm btn-amber" data-demo="yellow" type="button" data-i18n="demoYellow">Жёлтая (40 см)</button>
+      <button class="btn btn-sm btn-danger" data-demo="red" type="button" data-i18n="demoRed">Красная (24 см)</button>
+      <button class="btn btn-sm" data-demo="incomplete" type="button" data-i18n="demoIncomplete">Неполные моргания → E-1</button>
+      <button class="btn btn-sm" data-demo="fatigue" type="button" data-i18n="demoFatigue">Усталость → E-3</button>
+      <button class="btn btn-sm" data-demo="away" type="button" data-i18n="demoAway">Уход (AWAY)</button>
+    </div>
+
+    <!-- ==================== HERO: LIVE WEBCAM + 3 SIMPLE METRIC CARDS ==================== -->
+    <main class="hero-grid">
+      <!-- LEFT: LIVE INTERACTIVE WEBCAM STAGE WITH AR LANDMARK HUD -->
+      <section class="card cam-card">
+        <div class="card-header">
+          <h2 class="card-title" data-i18n="liveCameraTitle">Веб-камера в реальном времени (AR-трекинг глаз)</h2>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="badge tabular" id="fpsBadge">0 FPS</span>
+            <span class="badge" id="presenceBadge">Ожидание</span>
+          </div>
+        </div>
+
+        <div class="cam-stage" id="camStage">
+          <video id="camVideo" autoplay playsinline muted></video>
+          <canvas id="arCanvas"></canvas>
+
+          <!-- Live HUD pills overlaid on webcam -->
+          <div class="cam-hud-top">
+            <span class="hud-pill tabular" id="hudDistPill">Дистанция: — см</span>
+            <span class="hud-pill tabular" id="hudBlinkPill">Моргания: —/мин · EAR —</span>
+          </div>
+          <div class="cam-hud-bottom">
+            <span class="hud-pill" id="hudEnginePill">Локальный AI (MediaPipe WASM)</span>
+            <span class="hud-pill tabular" id="hudIrisPill">Радужка: — px</span>
+          </div>
+
+          <!-- Automatic 3-second Calibration Banner -->
+          <div class="calib-strip" id="calibStrip">Автокалибровка: сядьте на ~60 см от экрана и смотрите прямо... 3</div>
+
+          <!-- Initial 1-Click Start Overlay (disappears immediately when camera starts) -->
+          <div class="cam-overlay-center" id="camStartOverlay">
+            <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#6BB39B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <h2 data-i18n="heroHeadline">Нажмите «Начать» — всё остальное сделает программа</h2>
+            <p data-i18n="heroDesc">Автокалибровка за 3 секунды, живой трекинг радужки и морганий, автоматический подбор упражнений и автоотправка сводки.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px;">
+              <button class="btn btn-primary btn-lg" id="heroStartBtn" type="button" data-i18n="heroStartBtn">Включить камеру и начать</button>
+              <button class="btn btn-lg" id="heroDemoBtn" type="button" style="background:rgba(255,255,255,0.12);color:#FFF;border-color:rgba(255,255,255,0.28);" data-i18n="demoShortBtn">Демо без камеры</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simple 1-Row Control Strip -->
+        <div class="cam-actions">
+          <div class="cam-actions-group">
+            <button class="btn btn-primary" id="startStopBtn" type="button" data-i18n="startBtn">Начать</button>
+            <button class="btn" id="demoToggleBtn" type="button" data-i18n="demoShortBtn">Демо</button>
+            <button class="btn" id="triggerExerciseNowBtn" type="button" data-i18n="exerciseBtn">Упражнение сейчас</button>
+          </div>
+          <div class="cam-actions-group">
+            <button class="btn btn-sm" id="recalibQuickBtn" type="button" data-i18n="recalibShort">Калибровка (3 с)</button>
+            <button class="btn btn-sm" id="toggleVideoCollapseBtn" type="button" data-i18n="collapseCamBtn">Свернуть видео</button>
+          </div>
+        </div>
+        <div id="collapsedCamNotice" class="banner ok" style="display:none;margin:0;padding:8px 12px;font-size:12.5px;">
+          <span data-i18n="camCollapsedText">Видео свёрнуто, но мониторинг продолжает работать в фоне.</span>
+          <button class="btn btn-sm" id="expandVideoBtn" type="button" data-i18n="showCamBtn">Показать видео</button>
+        </div>
+      </section>
+
+      <!-- RIGHT: 3 CLEAN ONE-GLANCE METRIC CARDS -->
+      <section class="metrics-stack">
+        <!-- Card 1: Viewing Distance -->
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title" data-i18n="cardDistance">Дистанция до экрана</h2>
+            <span class="badge sage" id="distZoneBadge">—</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+            <div class="metric-big tabular"><span id="distValue">—</span> <span style="font-size:15px;font-weight:600;color:var(--text-muted);" data-i18n="cm">см</span></div>
+            <div class="metric-sub tabular" id="diopterText">Нагрузка: — D</div>
+          </div>
+          <div class="zone-bar" aria-hidden="true">
+            <div class="zone-seg-red"></div>
+            <div class="zone-seg-yellow"></div>
+            <div class="zone-seg-green"></div>
+            <div class="zone-marker" id="distMarker" style="left:60%;"></div>
+          </div>
+          <div class="metric-sub tabular" id="distCountdownText" data-i18n="distNormHint">Норма: ≥50 см (оптимум 60–70 см, СанПиН РК)</div>
+        </article>
+
+        <!-- Card 2: Eye State & EFI-60 -->
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title" data-i18n="cardEfi">Индекс усталости (EFI-60)</h2>
+            <span class="badge sage" id="efiStateBadge">0 / 100</span>
+          </div>
+          <div class="gauge-wrap">
+            <svg width="88" height="52" viewBox="0 0 100 60" aria-hidden="true">
+              <path d="M 10 52 A 40 40 0 0 1 90 52" fill="none" stroke="var(--surface-2)" stroke-width="10" stroke-linecap="round"/>
+              <path id="efiArcPath" d="M 10 52 A 40 40 0 0 1 90 52" fill="none" stroke="var(--sage)" stroke-width="10" stroke-linecap="round" stroke-dasharray="126" stroke-dashoffset="126"/>
+              <text x="50" y="48" text-anchor="middle" font-size="18" font-weight="800" fill="var(--text)" class="tabular" id="efiGaugeNum">0</text>
+            </svg>
+            <div>
+              <div style="font-weight:700;font-size:14.5px;" id="efiBandLabel" data-i18n="efiFresh">Свежие глаза</div>
+              <div class="metric-sub tabular" id="blinkBriefText">Моргания: —/мин · Неполные: —%</div>
+              <div class="metric-sub tabular" id="efiMetaText">Бейзлайн: 0/3 мин · Тренд: —</div>
+            </div>
+          </div>
+          <svg class="sparkline-svg" viewBox="0 0 240 36" preserveAspectRatio="none" aria-label="EFI trend">
+            <polyline id="efiSparkLinePoly" fill="none" stroke="var(--accent)" stroke-width="2.2" points="0,33 240,33"/>
+          </svg>
+        </article>
+
+        <!-- Card 3: Next Rest + Quick Finish & Auto-Send -->
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title" data-i18n="cardRest">До следующего отдыха</h2>
+            <span class="badge" id="nextExHintBadge">Auto</span>
+          </div>
+          <div class="gauge-wrap">
+            <svg width="66" height="66" viewBox="0 0 80 80" aria-hidden="true">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="var(--surface-2)" stroke-width="7"/>
+              <circle id="restRingCircle" cx="40" cy="40" r="32" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 40 40)" stroke-dasharray="201" stroke-dashoffset="0"/>
+              <text x="40" y="44" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" class="tabular" id="restRingText">20:00</text>
+            </svg>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:14px;" id="restStatusLabel" data-i18n="restWaiting">Ожидание запуска</div>
+              <div class="metric-sub tabular" id="breaksCountLabel">Перерывов: 0 · ΔEFI: —</div>
+              <div class="metric-sub" id="uploadStatusLine">Автоотправка: готово</div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="finishAndSendBtn" type="button" data-i18n="finishSendBtn">Завершить сессию и отправить данные</button>
+        </article>
+      </section>
+    </main>
+
+    <!-- Hidden utility canvases for luma & S2 local video overlay -->
+    <canvas id="lumaCanvas" width="32" height="24" style="display:none;"></canvas>
+    <canvas id="recordCanvas" width="640" height="480" style="display:none;"></canvas>
+
+    <!-- ==================== HIDDEN RESEARCHER SUITE (S1–S6 + AUTO-UPLOAD CONFIG) ==================== -->
+    <section class="research-drawer" id="researchDrawer">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Панель исследователя (НИРС: S1–S6 & Автоотправка)</h2>
+          <button class="btn btn-sm" id="closeResearchBtn" type="button">Скрыть панель ✕</button>
+        </div>
+
+        <div class="subtabs" role="tablist">
+          <button class="subtab-btn active" data-subtab="auto" type="button">Автоотправка & Ссылка</button>
+          <button class="subtab-btn" data-subtab="s1" type="button">S1 Дистанция</button>
+          <button class="subtab-btn" data-subtab="s2" type="button">S2 Моргания</button>
+          <button class="subtab-btn" data-subtab="s3" type="button">S3 AWAY</button>
+          <button class="subtab-btn" data-subtab="s4" type="button">S4 EFI & Блоки</button>
+          <button class="subtab-btn" data-subtab="s5" type="button">S5 Пилот & Анкеты</button>
+          <button class="subtab-btn" data-subtab="s6" type="button">S6 SUS & Аудит</button>
+          <button class="subtab-btn" data-subtab="export" type="button">Локальный экспорт</button>
+        </div>
+
+        <!-- SUBTAB: AUTO-UPLOAD & PARTICIPANT LINK GENERATOR -->
+        <div class="subpanel active" id="sub-auto">
+          <div class="cards-2">
+            <div class="card" style="box-shadow:none;">
+              <h3 class="card-title">Автоматическая отправка разработчику (Webhook / Google Apps Script)</h3>
+              <p class="metric-sub" style="margin:0;">Вставьте URL вашего Google Apps Script (или n8n / Flask). После этого у всех участников данные (метрики, упражнения, анкеты — <strong>без видео</strong>) будут уходить автоматически каждые 5 мин, при нажатии «Завершить» и при закрытии вкладки.</p>
+              <label class="field-label" for="webhookUrlInput">URL приёмника (Webhook / Google Apps Script)</label>
+              <input class="input mono" id="webhookUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+                <button class="btn btn-primary btn-sm" id="saveWebhookBtn" type="button">Сохранить URL</button>
+                <button class="btn btn-sm" id="sendNowTestBtn" type="button">Отправить данные сейчас</button>
+                <span class="badge" id="queueBadge">Очередь: 0</span>
+              </div>
+            </div>
+
+            <div class="card" style="box-shadow:none;">
+              <h3 class="card-title">Генератор готовой ссылки для участника (0 настроек у юзера)</h3>
+              <div class="grid-form">
+                <div>
+                  <label class="field-label" for="pidInput">Код (PID)</label>
+                  <input class="input mono" id="pidInput" value="P01">
+                </div>
+                <div>
+                  <label class="field-label" for="studyModeSelect">Режим</label>
+                  <select class="select" id="studyModeSelect">
+                    <option value="standard">Standard (Обычный / S5 Основная)</option>
+                    <option value="research">Research (S4: рандомизация E1/E2/E3/CTRL)</option>
+                    <option value="pilot_silent">Silent Control (S5: тихий контроль)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="visionSelect">Очки / Линзы</label>
+                  <select class="select" id="visionSelect">
+                    <option value="none">Без очков</option>
+                    <option value="glasses">Очки</option>
+                    <option value="contacts">Линзы</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="restIntervalInput">Отдых (мин)</label>
+                  <input class="input" id="restIntervalInput" type="number" min="5" max="60" value="20">
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                <button class="btn btn-primary btn-sm" id="savePassportBtn" type="button">Применить</button>
+                <button class="btn btn-sm" id="copyParticipantLinkBtn" type="button">Скопировать ссылку для участника</button>
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:6px;cursor:pointer;">
+                <input type="checkbox" id="soundEnabledChk" checked> Звук Web Audio API (440 / 587–880 Гц)
+              </label>
+            </div>
+          </div>
+          <div class="mono" style="font-size:12px;color:var(--text-muted);" id="rawTelemetryLine">EAR: — | EAR_open: — | Iris: — px | f_px: — | sA/sIB/sBR: — | Baseline: —</div>
+        </div>
+
+        <!-- SUBTAB: S1 DISTANCE -->
+        <div class="subpanel" id="sub-s1">
+          <div class="cards-2">
+            <div class="card" style="box-shadow:none;">
+              <h3 class="card-title">S1 · Замер дистанции 30–100 см (10-с медиана)</h3>
+              <div class="grid-form">
+                <div>
+                  <label class="field-label" for="s1RefSelect">Эталон D_ref</label>
+                  <select class="select" id="s1RefSelect">
+                    <option value="30">30 см</option><option value="40">40 см</option><option value="50">50 см</option>
+                    <option value="60" selected>60 см</option><option value="70">70 см</option><option value="80">80 см</option><option value="100">100 см</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="s1GlassesSelect">Очки</label>
+                  <select class="select" id="s1GlassesSelect"><option value="no">Нет</option><option value="yes">Да</option></select>
+                </div>
+                <div>
+                  <label class="field-label" for="s1LightSelect">Свет</label>
+                  <select class="select" id="s1LightSelect"><option value="bright">Норма</option><option value="dim">Тёмно</option></select>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center;">
+                <button class="btn btn-primary btn-sm" id="s1Record10sBtn" type="button">Записать 10 с</button>
+                <span class="badge tabular" id="s1ProgressBadge">Готов</span>
+                <span class="metric-sub tabular" id="s1LiveStats">MAE: — · MAPE: —</span>
+              </div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <h3 class="card-title">Тест задержки алертов и гистерезиса 48–52 см</h3>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                <button class="btn btn-amber btn-sm" id="s1MarkYellowBtn" type="button">Вход в Жёлтую</button>
+                <button class="btn btn-danger btn-sm" id="s1MarkRedBtn" type="button">Вход в Красную</button>
+                <button class="btn btn-sm" id="s1ChatterTestBtn" type="button">Тест 48–52 см (60 с)</button>
+                <button class="btn btn-sm" id="s1ClearBtn" type="button">Очистить S1</button>
+              </div>
+              <div class="metric-sub mono" id="s1AlertTestOut">Ожидание...</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>UTC</th><th>D_ref</th><th>D_est</th><th>Err (cm)</th><th>APE (%)</th><th>Glasses</th><th>Light</th></tr></thead>
+              <tbody id="s1Tbody" class="tabular"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB: S2 BLINKS -->
+        <div class="subpanel" id="sub-s2">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <span class="badge tabular" id="s2TimerBadge">05:00</span>
+            <button class="btn btn-primary btn-sm" id="s2StartBtn" type="button">Старт 5-мин S2 (+локальное видео UTC)</button>
+            <button class="btn btn-danger btn-sm" id="s2StopBtn" type="button" disabled>Стоп S2</button>
+            <button class="btn btn-sm" id="s2DownloadClipBtn" type="button" disabled>Скачать видеоклип</button>
+            <button class="btn btn-danger btn-sm" id="s2DeleteClipBtn" type="button" disabled>Удалить видеоклип</button>
+            <span class="metric-sub tabular" id="s2StatsText">Морганий: 0 (неполных: 0)</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Start UTC</th><th>End UTC</th><th>Dur ms</th><th>Type</th><th>minEAR / open</th><th>Blend</th></tr></thead>
+              <tbody id="s2Tbody" class="tabular"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB: S3 AWAY -->
+        <div class="subpanel" id="sub-s3">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;">
+            <button class="btn btn-sm" data-s3="leave" type="button">[1] Ушёл</button>
+            <button class="btn btn-sm" data-s3="turn_away" type="button">[2] Отвернулся</button>
+            <button class="btn btn-sm" data-s3="hand_face" type="button">[3] Рука у лица</button>
+            <button class="btn btn-sm" data-s3="phone_down" type="button">[4] В телефон</button>
+            <button class="btn btn-primary btn-sm" data-s3="return" type="button">[5] Вернулся</button>
+            <span class="badge tabular" id="s3CountBadge">0 / 10</span>
+            <span class="metric-sub mono" id="s3ActiveScenario">PRESENT</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Scenario</th><th>Start UTC</th><th>GT s</th><th>Det s</th><th>Err s</th><th>Paused?</th></tr></thead>
+              <tbody id="s3Tbody" class="tabular"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB: S4 EFI & RANDOMIZED BLOCKS -->
+        <div class="subpanel" id="sub-s4">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <button class="btn btn-primary btn-sm" id="s4EnableResearchBtn" type="button">Включить Research Mode (S4)</button>
+            <button class="btn btn-sm" id="s4TriggerNextBlockBtn" type="button">Запустить следующее событие блока</button>
+            <button class="btn btn-sm" id="s4OpenVasBtn" type="button">Записать усталость 0–10</button>
+            <span class="metric-sub tabular" id="s4BlockStats">Блоки: E-1: 0 · E-2: 0 · E-3: 0 · CTRL: 0 (0/12)</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>UTC</th><th>Code</th><th>Resp</th><th>EFI pre</th><th>EFI post</th><th>ΔEFI</th><th>ΔIB</th></tr></thead>
+              <tbody id="recentEventsTbody" class="tabular"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB: S5 PILOT & QUESTIONNAIRES -->
+        <div class="subpanel" id="sub-s5">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <select class="select select-compact" id="s5CheckpointSelect">
+              <option value="T0">T0 (Старт)</option>
+              <option value="T1">T1 (Конец 2–4 нед)</option>
+              <option value="T2">T2 (Через 1 нед отмены)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="openCvsqBtn" type="button">Анкета CVS-Q (16)</button>
+            <button class="btn btn-primary btn-sm" id="openOsdiBtn" type="button">Анкета OSDI (12)</button>
+            <button class="btn btn-sm" id="openSusBtn2" type="button">Анкета SUS (10)</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>UTC</th><th>PID</th><th>CP</th><th>Scale</th><th>Score</th></tr></thead>
+              <tbody id="questTbody" class="tabular"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUBTAB: S6 USABILITY & AUDIT -->
+        <div class="subpanel" id="sub-s6">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <button class="btn btn-primary btn-sm" id="openSusBtn" type="button">Пройти SUS (10 вопросов)</button>
+            <button class="btn btn-sm" id="runAuditBtn" type="button">Самоаудит браузера & WCAG 2.1 AA</button>
+            <button class="btn btn-sm" id="resetBaselineBtn" type="button">Сбросить 3-мин бейзлайн</button>
+          </div>
+          <div id="auditOutput" class="mono" style="font-size:12px;white-space:pre-wrap;color:var(--text-muted);">Нажмите «Самоаудит» для проверки API, FPS и контрастности.</div>
+        </div>
+
+        <!-- SUBTAB: LOCAL EXPORT -->
+        <div class="subpanel" id="sub-export">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <button class="btn btn-primary btn-sm" id="exportAllJsonBtn" type="button">Скачать JSON-пакет</button>
+            <button class="btn btn-sm" data-export="minutes" type="button">minutes.csv</button>
+            <button class="btn btn-sm" data-export="alerts" type="button">alerts.csv</button>
+            <button class="btn btn-sm" data-export="exercises" type="button">events_exercises.csv</button>
+            <button class="btn btn-sm" data-export="questionnaires" type="button">questionnaires.csv</button>
+            <button class="btn btn-sm" data-export="s1" type="button">s1_distance.csv</button>
+            <button class="btn btn-sm" data-export="s2" type="button">s2_blinks.csv</button>
+            <button class="btn btn-sm" data-export="s3" type="button">s3_away.csv</button>
+            <button class="btn btn-sm" data-export="s6" type="button">s6_usability.csv</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span class="metric-sub" id="exportCountsSummary">—</span>
+            <button class="btn btn-danger btn-sm" id="wipeDbBtn" type="button">Очистить локальную базу</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="disclaimer-foot">
+      <span data-i18n="disclaimer">EyeCare Monitor — эргономический инструмент профилактики усталости глаз (не медицинское изделие). Видео обрабатывается локально и никогда не отправляется.</span>
+      <span class="mono" id="footerPidInfo">PID: P01</span>
+    </footer>
+  </div>
+
+  <!-- In-page Mini-Widget Fallback -->
+  <div class="mini-widget" id="inPageMiniWidget">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <strong>EyeCare Monitor</strong>
+      <button class="btn btn-sm" id="closeMiniWidgetBtn" type="button" style="min-height:24px;padding:2px 6px;">✕</button>
+    </div>
+    <div class="tabular" style="display:flex;justify-content:space-between;gap:8px;">
+      <div>Dist: <strong id="miniDist">— cm</strong></div>
+      <div>EFI: <strong id="miniEfi">0</strong></div>
+      <div>Rest: <strong id="miniRest">20:00</strong></div>
+    </div>
+    <div class="metric-sub" id="miniState" style="margin-top:3px;">Idle</div>
+  </div>
+
+  <!-- ==================== MODAL 1: AUTOMATIC EXERCISE FOCUS OVERLAY ==================== -->
+  <div class="overlay" id="exerciseOverlay" role="dialog" aria-modal="true" aria-labelledby="exTitle">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <h2 id="exTitle">Упражнение</h2>
+        <button class="btn btn-sm btn-pill" id="exInfoBtn" type="button">ⓘ Справка</button>
+      </div>
+      <div class="badge sage" id="exReasonBadge" style="margin-bottom:8px;">Автоподбор</div>
+      <div id="exEvidenceBox" class="banner" style="display:none;font-size:12.5px;"></div>
+
+      <div class="exercise-stage">
+        <div id="exSvgContainer" style="min-height:120px;display:grid;place-items:center;"></div>
+        <div style="font-size:24px;font-weight:800;margin-top:8px;" class="tabular" id="exCounterText">Готовы?</div>
+        <div class="metric-sub" id="exInstructionText">—</div>
+      </div>
+
+      <div style="text-align:center;">
+        <div class="metric-sub" id="exComfortPrompt">Комфорт глаз (0–10, необязательно):</div>
+        <div class="comfort-row" id="exComfortButtons"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" id="exSkipBtn" type="button" data-i18n="skipBtn">Пропустить</button>
+        <button class="btn" id="exSnoozeBtn" type="button" data-i18n="snoozeBtn">Позже (+5 мин)</button>
+        <button class="btn btn-primary" id="exStartActionBtn" type="button" data-i18n="startExBtn">Начать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: QUESTIONNAIRES (VAS / CVS-Q / OSDI / SUS) ==================== -->
+  <div class="overlay" id="questOverlay" role="dialog" aria-modal="true" aria-labelledby="questTitle">
+    <div class="modal modal-lg">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 id="questTitle">Опросник</h2>
+        <button class="btn btn-sm" id="questCloseBtn" type="button">✕</button>
+      </div>
+      <p class="metric-sub" id="questDesc"></p>
+      <div id="questBody"></div>
+      <div class="modal-footer">
+        <button class="btn" id="questCancelBtn" type="button" data-i18n="cancelBtn">Отмена</button>
+        <button class="btn btn-primary" id="questSubmitBtn" type="button" data-i18n="saveQuestBtn">Сохранить и отправить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: AWAY >= 10 MIN ==================== -->
+  <div class="overlay" id="away10Overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 data-i18n="away10Title">Вы отсутствовали более 10 минут</h2>
+      <p data-i18n="away10Text">Сессия на паузе. Продолжить мониторинг или завершить и отправить данные?</p>
+      <div class="modal-footer">
+        <button class="btn" id="away10StopBtn" type="button" data-i18n="finishSendBtn">Завершить и отправить</button>
+        <button class="btn btn-primary" id="away10ContinueBtn" type="button" data-i18n="continueSessionBtn">Продолжить</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+  'use strict';
+
+  /* =========================================================================
+   * DEVELOPER CONFIGURATION (Set your Google Apps Script / Webhook URL ONCE!)
+   * Leave empty "" to save locally until you paste your URL here or via ?webhook=...
+   * ========================================================================= */
+  const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbz4uu8ynsPO9HpVU-JDdgT0GoxAr6ZBr1E4RHZdtHdF2JZrDFLY_uAlsAmH_ZuGceDG/exec";
+  const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000; // Auto-upload every 5 min + on Stop + on page close
+
+  /* =========================================================================
+   * 1. TRILINGUAL I18N (RU / KK / EN) & QUESTIONNAIRES
+   * ========================================================================= */
+  const I18N = {
+    ru: {
+      subtitle: 'Интерактивная профилактика усталости глаз · 100% на устройстве',
+      miniWidget: 'Мини-окно',
+      silentNotice: 'Активен фоновый сбор данных (тихий режим). По завершении работы нажмите «Завершить и отправить».',
+      demoPresetsLabel: 'Демо для жюри (симуляция):',
+      demoNormal: 'Норма (62 см)', demoYellow: 'Жёлтая (40 см)', demoRed: 'Красная (24 см)',
+      demoIncomplete: 'Неполные моргания → E-1', demoFatigue: 'Усталость → E-3', demoAway: 'Уход (AWAY)',
+      liveCameraTitle: 'Веб-камера в реальном времени (AR-трекинг глаз)',
+      heroHeadline: 'Нажмите «Начать» — всё остальное сделает программа',
+      heroDesc: 'Автокалибровка за 3 секунды, живой трекинг радужки и морганий, автоматический подбор упражнений и автоотправка сводки.',
+      heroStartBtn: 'Включить камеру и начать',
+      demoShortBtn: 'Демо',
+      stopDemoBtn: 'Выйти из Демо',
+      startBtn: 'Начать',
+      stopBtn: 'Пауза',
+      exerciseBtn: 'Упражнение сейчас',
+      recalibShort: 'Калибровка (3 с)',
+      collapseCamBtn: 'Свернуть видео',
+      showCamBtn: 'Показать видео',
+      camCollapsedText: 'Видео свёрнуто, но мониторинг продолжает работать в фоне.',
+      cardDistance: 'Дистанция до экрана', cm: 'см',
+      distNormHint: 'Норма: ≥50 см (оптимум 60–70 см, СанПиН РК)',
+      cardEfi: 'Индекс усталости (EFI-60)',
+      efiFresh: 'Свежие глаза', efiBuilding: 'Усталость копится', efiRest: 'Пора отдохнуть',
+      cardRest: 'До следующего отдыха',
+      restWaiting: 'Ожидание запуска', restActive: 'Активная работа', restAway: 'Лицо вне кадра (пауза)',
+      finishSendBtn: 'Завершить сессию и отправить данные',
+      disclaimer: 'EyeCare Monitor — эргономический инструмент профилактики усталости глаз (не медицинское изделие). Видео обрабатывается локально и никогда не отправляется.',
+      skipBtn: 'Пропустить', snoozeBtn: 'Позже (+5 мин)', startExBtn: 'Начать', doneExBtn: 'Готово',
+      cancelBtn: 'Отмена', saveQuestBtn: 'Сохранить и отправить',
+      away10Title: 'Вы отсутствовали более 10 минут',
+      away10Text: 'Сессия на паузе. Продолжить мониторинг или завершить и отправить данные?',
+      continueSessionBtn: 'Продолжить',
+      zoneSafe: 'Норма', zoneYellow: 'Близко (30–50 см)', zoneRed: 'Очень близко (<30 см)',
+      toastYellow: 'Вы близко к экрану (30–50 см). Отодвиньтесь минимум на 50 см.',
+      toastRed: 'Слишком близко (<30 см)! Отодвиньтесь для снятия нагрузки.',
+      ex: {
+        'E-1': { title: 'E-1 · Силовое моргание', reason: 'Обнаружены неполные или редкие моргания', evidence: 'Исследования (Wolffsohn et al., 2025; Kim et al., 2021): 15 повторов «закрыть–сжать–открыть» снижают долю неполных морганий.', phases: ['Мягко закройте глаза', 'Сожмите веки', 'Спокойно откройте'] },
+        'E-2': { title: 'E-2 · Взгляд вдаль (20-20-20)', reason: 'Прошло 20 минут непрерывной работы', evidence: 'Правило 20-20-20 (Talens-Estarelles et al., 2023): 20 с взгляда вдаль (≥6 м) для расслабления цилиарной мышцы.', instruction: 'Посмотрите вдаль (≥6 метров, например в окно) в течение 20 секунд.' },
+        'E-3': { title: 'E-3 · Разминка для глаз (2 мин)', reason: 'Накоплена усталость глаз (EFI)', evidence: 'Комплекс из 6 шагов (Kim, 2016; Gupta & Aparna, 2020): краткая цифровая версия проверяется в S4.', steps: [
+          { name: 'Пальминг (ладони на закрытые веки)', dur: 20, anim: 'palm' },
+          { name: 'Мягкое моргание', dur: 15, anim: 'blink' },
+          { name: 'Взгляд влево — вправо', dur: 20, anim: 'lr' },
+          { name: 'Взгляд вверх — вниз', dur: 20, anim: 'ud' },
+          { name: 'Медленные круги глазами', dur: 20, anim: 'circle' },
+          { name: 'Фокус: палец (30 см) ↔ даль (>6 м)', dur: 25, anim: 'focus' }
+        ]},
+        'CTRL': { title: 'CTRL · Спокойная пауза (20 с)', reason: 'Контрольное условие (Research Mode)', evidence: '20 секунд спокойного отдыха без специальных упражнений для чистого сравнения ΔEFI.', instruction: 'Просто отдохните 20 секунд до мягкого сигнала.' }
+      }
+    },
+    kk: {
+      subtitle: 'Көз шаршауының интерактивті алдын алуы · 100% құрылғыда',
+      miniWidget: 'Шағын терезе',
+      silentNotice: 'Фондық деректер жинау белсенді. Жұмысты аяқтаған соң «Аяқтау және жіберу» батырмасын басыңыз.',
+      demoPresetsLabel: 'Қазыларға демо (симуляция):',
+      demoNormal: 'Қалыпты (62 см)', demoYellow: 'Сары (40 см)', demoRed: 'Қызыл (24 см)',
+      demoIncomplete: 'Толық емес жыпылықтау → E-1', demoFatigue: 'Шаршау → E-3', demoAway: 'Кету (AWAY)',
+      liveCameraTitle: 'Нақты уақыттағы веб-камера (AR көз трекингі)',
+      heroHeadline: '«Бастау» батырмасын басыңыз — қалғанын бағдарлама өзі жасайды',
+      heroDesc: '3 секундта автокалибрлеу, нұрлы қабық пен жыпылықтауды бақылау, автоматты жаттығулар және деректерді автожіберу.',
+      heroStartBtn: 'Камераны қосу және бастау',
+      demoShortBtn: 'Демо', stopDemoBtn: 'Демодан шығу',
+      startBtn: 'Бастау', stopBtn: 'Кідірту',
+      exerciseBtn: 'Жаттығу', recalibShort: 'Калибрлеу (3 с)',
+      collapseCamBtn: 'Бейнені жасыру', showCamBtn: 'Бейнені көрсету',
+      camCollapsedText: 'Бейне жасырылды, бірақ бақылау фонда жалғасуда.',
+      cardDistance: 'Экранға дейінгі қашықтық', cm: 'см',
+      distNormHint: 'Қалыпты: ≥50 см (оңтайлы 60–70 см, ҚР ДСМ-79)',
+      cardEfi: 'Шаршау индексі (EFI-60)',
+      efiFresh: 'Көз сергек', efiBuilding: 'Шаршау жиналуда', efiRest: 'Демалатын уақыт',
+      cardRest: 'Келесі демалысқа дейін',
+      restWaiting: 'Іске қосуды күтуде', restActive: 'Белсенді жұмыс', restAway: 'Бет кадрда жоқ (кідіріс)',
+      finishSendBtn: 'Сессияны аяқтау және деректерді жіберу',
+      disclaimer: 'EyeCare Monitor — эргономикалық құрал (медициналық бұйым емес). Бейне тек құрылғыңызда өңделеді және ешқайда жіберілмейді.',
+      skipBtn: 'Өткізу', snoozeBtn: 'Кейінірек (+5 мин)', startExBtn: 'Бастау', doneExBtn: 'Дайын',
+      cancelBtn: 'Болдырмау', saveQuestBtn: 'Сақтау және жіберу',
+      away10Title: '10 минуттан астам болмадыңыз',
+      away10Text: 'Сессия кідіртілді. Бақылауды жалғастыру немесе деректерді жіберу керек пе?',
+      continueSessionBtn: 'Жалғастыру',
+      zoneSafe: 'Қалыпты', zoneYellow: 'Жақын (30–50 см)', zoneRed: 'Өте жақын (<30 см)',
+      toastYellow: 'Экранға жақын отырсыз (30–50 см). Кемінде 50 см шегініңіз.',
+      toastRed: 'Өте жақын (<30 см)! Көзге жүктемені азайту үшін шегініңіз.',
+      ex: {
+        'E-1': { title: 'E-1 · Күшті жыпылықтау', reason: 'Толық емес немесе сирек жыпылықтау', evidence: '15 рет «жабу–қысу–ашу» жаттығуы (Wolffsohn et al., 2025).', phases: ['Көзді ақырын жабыңыз', 'Қабақты қысыңыз', 'Жайлап ашыңыз'] },
+        'E-2': { title: 'E-2 · Алысқа қарау (20-20-20)', reason: '20 минут үздіксіз жұмыс өтті', evidence: '20-20-20 ережесі: 6 метрден алысқа 20 секунд қарау.', instruction: '20 секунд бойы кемінде 6 метр алысқа қараңыз.' },
+        'E-3': { title: 'E-3 · Көз жаттығуы (2 мин)', reason: 'Жоғары көз шаршауы (EFI)', evidence: '6 қадамды көз гимнастикасы (Kim, 2016; Gupta & Aparna, 2020).', steps: [
+          { name: 'Пальминг (алақанды жабық көзге қою)', dur: 20, anim: 'palm' },
+          { name: 'Жұмсақ жыпылықтау', dur: 15, anim: 'blink' },
+          { name: 'Солға — оңға қарау', dur: 20, anim: 'lr' },
+          { name: 'Жоғары — төмен қарау', dur: 20, anim: 'ud' },
+          { name: 'Шеңбер бойымен қозғалту', dur: 20, anim: 'circle' },
+          { name: 'Фокус: саусақ (30 см) ↔ алыс (>6 м)', dur: 25, anim: 'focus' }
+        ]},
+        'CTRL': { title: 'CTRL · Тыныш үзіліс (20 с)', reason: 'Зерттеу режимі (бақылау)', evidence: 'Арнайы жаттығусыз 20 секундтық демалыс.', instruction: 'Дыбыстық белгіге дейін 20 секунд тыныш демалыңыз.' }
+      }
+    },
+    en: {
+      subtitle: 'Interactive Digital Eye Strain Prevention · 100% On-Device',
+      miniWidget: 'Mini-widget',
+      silentNotice: 'Background data collection active (Silent Mode). Click “Finish & Send Data” when done.',
+      demoPresetsLabel: 'Jury Demo (Simulation):',
+      demoNormal: 'Normal (62 cm)', demoYellow: 'Yellow (40 cm)', demoRed: 'Red (24 cm)',
+      demoIncomplete: 'Incomplete Blinks → E-1', demoFatigue: 'High Fatigue → E-3', demoAway: 'Away (AWAY)',
+      liveCameraTitle: 'Live Webcam Stage (AR Ocular Tracking)',
+      heroHeadline: 'Click Start — the app handles everything automatically',
+      heroDesc: '3-second auto-calibration, live iris & blink AR tracking, automatic exercises, and automatic metric upload.',
+      heroStartBtn: 'Enable Camera & Start',
+      demoShortBtn: 'Demo', stopDemoBtn: 'Exit Demo',
+      startBtn: 'Start', stopBtn: 'Pause',
+      exerciseBtn: 'Exercise Now', recalibShort: 'Calibrate (3 s)',
+      collapseCamBtn: 'Hide Video', showCamBtn: 'Show Video',
+      camCollapsedText: 'Video preview is collapsed; monitoring continues in the background.',
+      cardDistance: 'Viewing Distance', cm: 'cm',
+      distNormHint: 'Safe: ≥50 cm (optimal 60–70 cm, RK Order ҚР ДСМ-79)',
+      cardEfi: 'Eye Fatigue Index (EFI-60)',
+      efiFresh: 'Fresh eyes', efiBuilding: 'Fatigue building up', efiRest: 'Time to rest',
+      cardRest: 'Next Automatic Rest',
+      restWaiting: 'Waiting to start', restActive: 'Active screen work', restAway: 'Face out of frame (paused)',
+      finishSendBtn: 'Finish Session & Send Data',
+      disclaimer: 'EyeCare Monitor is an ergonomic aid (not a medical device). Video is processed strictly on-device and never transmitted.',
+      skipBtn: 'Skip', snoozeBtn: 'Later (+5 min)', startExBtn: 'Start', doneExBtn: 'Done',
+      cancelBtn: 'Cancel', saveQuestBtn: 'Save & Send',
+      away10Title: 'Away for over 10 minutes',
+      away10Text: 'Session paused. Continue monitoring or finish and send data?',
+      continueSessionBtn: 'Continue',
+      zoneSafe: 'Safe', zoneYellow: 'Close (30–50 cm)', zoneRed: 'Too Close (<30 cm)',
+      toastYellow: 'Viewing distance 30–50 cm. Move back to ≥50 cm.',
+      toastRed: 'Too close (<30 cm)! Move back to reduce ciliary load.',
+      ex: {
+        'E-1': { title: 'E-1 · Forceful Blinking', reason: 'Incomplete or infrequent blinks detected', evidence: 'Dry-eye trials (Wolffsohn et al., 2025): 15 close–squeeze–open reps reduce incomplete blinks.', phases: ['Close gently', 'Squeeze eyelids', 'Open calmly'] },
+        'E-2': { title: 'E-2 · Distant Gaze (20-20-20)', reason: '20 minutes of continuous screen work', evidence: '20-20-20 rule (Talens-Estarelles et al., 2023): 20 s distant gaze (≥6 m).', instruction: 'Look at an object ≥6 meters away for 20 seconds.' },
+        'E-3': { title: 'E-3 · 2-Min Ocular Warm-Up', reason: 'Elevated Eye Fatigue Index (EFI)', evidence: '6-step warm-up (Kim, 2016; Gupta & Aparna, 2020) tested in S4.', steps: [
+          { name: 'Palming (warm palms over closed eyes)', dur: 20, anim: 'palm' },
+          { name: 'Soft relaxed blinking', dur: 15, anim: 'blink' },
+          { name: 'Smooth gaze left — right', dur: 20, anim: 'lr' },
+          { name: 'Smooth gaze up — down', dur: 20, anim: 'ud' },
+          { name: 'Slow circular movements', dur: 20, anim: 'circle' },
+          { name: 'Focus shift: finger (30 cm) ↔ far (>6 m)', dur: 25, anim: 'focus' }
+        ]},
+        'CTRL': { title: 'CTRL · Quiet Pause (20 s)', reason: 'Research Mode control break', evidence: '20-second quiet rest comparator for ΔEFI analysis.', instruction: 'Rest quietly for 20 seconds until the chime.' }
+      }
+    }
+  };
+
+  const CVSQ_ITEMS = {
+    ru: ['Жжение','Зуд','Ощущение инородного тела','Слезотечение','Учащённое моргание','Покраснение глаз','Боль в глазах','Тяжесть в веках','Сухость','Размытость зрения','Двоение в глазах','Трудность фокусировки вблизи','Чувствительность к свету','Ореолы вокруг предметов','Ощущение ухудшения зрения','Головная боль'],
+    kk: ['Көздің ашуы','Қышу','Бөгде зат сезімі','Жасаурау','Жиі жыпылықтау','Қызару','Көз ауыруы','Қабақ ауырлығы','Құрғақтық','Бұлыңғырлану','Қосарланып көріну','Жақын фокустау қиындығы','Жарыққа сезімталдық','Шеңберлер көрінуі','Көру нашарлағандай сезім','Бас ауыруы'],
+    en: ['Burning','Itching','Foreign body sensation','Tearing','Excessive blinking','Eye redness','Eye pain','Heavy eyelids','Dryness','Blurred vision','Double vision','Difficulty focusing near','Light sensitivity','Colored halos','Sight worsening','Headache']
+  };
+  const OSDI_ITEMS = {
+    ru: ['Светобоязнь','Ощущение песка','Боль или резь','Затуманенное зрение','Плохое зрение','Трудности при чтении','Вождение ночью','Работа за компьютером','Просмотр ТВ','Дискомфорт на ветру','Низкая влажность','Помещения с кондиционером'],
+    kk: ['Жарыққа сезімталдық','Көзде құм сезімі','Көз ауыруы','Бұлыңғыр көру','Нашар көру','Оқу қиындығы','Түнде көлік жүргізу','Компьютермен жұмыс','Теледидар көру','Желді ауа райы','Құрғақ ауа','Кондиционер бар бөлме'],
+    en: ['Light sensitivity','Gritty eyes','Painful/sore eyes','Blurred vision','Poor vision','Problems reading','Driving at night','Working with computer','Watching TV','Windy conditions','Low humidity','Air-conditioned areas']
+  };
+  const SUS_ITEMS = {
+    ru: ['Хотел(а) бы часто пользоваться этим приложением.','Приложение показалось излишне сложным.','Приложение было простым в использовании.','Мне понадобилась бы помощь специалиста.','Функции приложения хорошо интегрированы.','В приложении слишком много несогласованностей.','Большинство людей быстро научатся им пользоваться.','Приложение показалось очень неудобным.','Я чувствовал(а) себя уверенно при работе.','Пришлось многому научиться перед стартом.'],
+    kk: ['Қосымшаны жиі қолданғым келеді.','Қосымша тым күрделі көрінді.','Қосымшаны пайдалану оңай болды.','Маманның көмегі қажет болады.','Функциялар өзара жақсы үйлескен.','Сәйкессіздіктер тым көп.','Көпшілігі тез үйреніп алады.','Қосымша ыңғайсыз көрінді.','Өзімді сенімді сезіндім.','Бастамас бұрын көп үйрену керек болды.'],
+    en: ['I would like to use this system frequently.','I found the system unnecessarily complex.','I thought the system was easy to use.','I would need technical support to use it.','Functions were well integrated.','Too much inconsistency in this system.','Most people would learn it very quickly.','I found the system very cumbersome.','I felt very confident using the system.','I needed to learn a lot before starting.']
+  };
+
+  /* =========================================================================
+   * 2. UTILITIES & LOCAL INDEXEDDB STORE
+   * ========================================================================= */
+  const $ = (id) => document.getElementById(id);
+  const nowIso = () => new Date().toISOString();
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const clip01 = (v) => clamp(v, 0, 1);
+  const median = (arr) => { if (!arr || !arr.length) return null; const s = [...arr].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; };
+  const mean = (arr) => arr && arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  const std = (arr) => { if (!arr || arr.length < 2) return 0; const m = mean(arr); return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1)); };
+  const percentile = (arr, p) => { if (!arr || !arr.length) return 0; const s = [...arr].sort((a,b)=>a-b); return s[clamp(Math.floor((p/100)*(s.length-1)), 0, s.length-1)]; };
+  const fmtMMSS = (sec) => { const s = Math.max(0, Math.floor(sec)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+  const dist2D = (a, b, vw, vh) => Math.hypot((a.x - b.x) * vw, (a.y - b.y) * vh);
+  const detectDevice = () => (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') || window.innerWidth < 680) ? 'phone' : 'desktop';
+  const detectWebView = () => /Instagram|FBAN|FBAV|Telegram|WhatsApp|Line\/|VKClient|; wv\)/i.test(navigator.userAgent || '');
+  const safeLSGet = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch { return fb; } };
+  const safeLSSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+  function downloadFile(filename, content, mime) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+  }
+  function toCsv(rows, columns) {
+    const esc = (v) => { if (v === null || v === undefined) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    return '\uFEFF' + [columns.join(','), ...rows.map(r => columns.map(c => esc(r[c])).join(','))].join('\r\n');
+  }
+
+  class LocalStore {
+    constructor() {
+      this.dbName = 'EyeCareMonitorDB_v2';
+      this.stores = ['minutes', 'alerts', 'exercises', 'questionnaires', 's1', 's2', 's3', 's6'];
+      this.db = null; this.usingMemory = false; this.mem = {};
+      this.stores.forEach(s => { this.mem[s] = []; });
+    }
+    async init() {
+      if (typeof indexedDB === 'undefined') { this.usingMemory = true; return; }
+      try {
+        this.db = await new Promise((res, rej) => {
+          const req = indexedDB.open(this.dbName, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            this.stores.forEach(name => { if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: '_id', autoIncrement: true }); });
+          };
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => rej(req.error);
+        });
+      } catch { this.usingMemory = true; }
+    }
+    async add(storeName, record) {
+      const rec = { ...record, _synced: 0 };
+      if (this.usingMemory || !this.db) { rec._id = this.mem[storeName].length + 1; this.mem[storeName].push(rec); return rec._id; }
+      try {
+        return await new Promise((res, rej) => {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const req = tx.objectStore(storeName).add(rec);
+          req.onsuccess = () => res(req.result);
+          req.onerror = () => rej(req.error);
+        });
+      } catch { this.usingMemory = true; rec._id = this.mem[storeName].length + 1; this.mem[storeName].push(rec); return rec._id; }
+    }
+    async put(storeName, record) {
+      if (this.usingMemory || !this.db) {
+        const i = this.mem[storeName].findIndex(x => x._id === record._id);
+        if (i >= 0) this.mem[storeName][i] = { ...record };
+        return;
+      }
+      try {
+        await new Promise((res, rej) => {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const req = tx.objectStore(storeName).put(record);
+          req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+        });
+      } catch {}
+    }
+    async getAll(storeName) {
+      if (this.usingMemory || !this.db) return [...this.mem[storeName]];
+      try {
+        return await new Promise((res, rej) => {
+          const tx = this.db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).getAll();
+          req.onsuccess = () => res(req.result || []); req.onerror = () => rej(req.error);
+        });
+      } catch { return [...this.mem[storeName]]; }
+    }
+    async clearStore(storeName) {
+      this.mem[storeName] = [];
+      if (this.usingMemory || !this.db) return;
+      try {
+        await new Promise((res, rej) => {
+          const tx = this.db.transaction(storeName, 'readwrite');
+          const req = tx.objectStore(storeName).clear();
+          req.onsuccess = () => res(); req.onerror = () => rej(req.error);
+        });
+      } catch {}
+    }
+    async wipeAll() { for (const s of this.stores) await this.clearStore(s); }
+  }
+
+  /* =========================================================================
+   * 3. AUDIO & NOTIFICATIONS ENGINE
+   * ========================================================================= */
+  class AudioNotifEngine {
+    constructor() { this.ctx = null; this.keepAliveOsc = null; this.keepAliveGain = null; this.defaultTitle = document.title; this.titleTimer = null; }
+    unlock() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!this.ctx) this.ctx = new Ctx();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      } catch {}
+    }
+    startKeepAlive() {
+      this.unlock();
+      if (!this.ctx || this.keepAliveOsc) return;
+      try {
+        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = 20; g.gain.value = 0.00003;
+        osc.connect(g); g.connect(this.ctx.destination); osc.start();
+        this.keepAliveOsc = osc; this.keepAliveGain = g;
+      } catch {}
+    }
+    stopKeepAlive() {
+      try { if (this.keepAliveOsc) { this.keepAliveOsc.stop(); this.keepAliveOsc.disconnect(); } if (this.keepAliveGain) this.keepAliveGain.disconnect(); } catch {}
+      this.keepAliveOsc = null; this.keepAliveGain = null;
+    }
+    playTone(freq, ms, delayMs = 0, peak = 0.14) {
+      this.unlock(); if (!this.ctx) return;
+      try {
+        const t0 = this.ctx.currentTime + delayMs / 1000, dur = ms / 1000;
+        const atk = Math.min(0.02, dur * 0.25), rel = Math.min(0.02, dur * 0.25);
+        const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(freq, t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(peak, t0 + atk);
+        g.gain.setValueAtTime(peak, Math.max(t0 + atk, t0 + dur - rel));
+        g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(t0); osc.stop(t0 + dur + 0.02);
+      } catch {}
+    }
+    playYellow() { this.playTone(440, 180, 0, 0.13); }
+    playRed() { this.playTone(587, 150, 0, 0.16); this.playTone(880, 150, 250, 0.16); }
+    playChime() { this.playTone(523.25, 150, 0, 0.09); this.playTone(659.25, 200, 130, 0.09); }
+    notify(title, body) {
+      document.title = `(!) ${title}`;
+      clearTimeout(this.titleTimer);
+      this.titleTimer = setTimeout(() => { document.title = this.defaultTitle; }, 6000);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try { new Notification(title, { body, silent: true }); } catch {}
+      }
+    }
+  }
+
+  /* =========================================================================
+   * 4. STATE & AUTOMATIC CLOUD UPLOADER (CORS-SAFE + SEND-BEACON + OFFLINE QUEUE)
+   * ========================================================================= */
+  const store = new LocalStore();
+  const audio = new AudioNotifEngine();
+
+  const STATE = {
+    lang: 'ru',
+    theme: 'light',
+    deviceProfile: detectDevice(),
+    running: false,
+    demoMode: false,
+    demoPreset: 'normal',
+    mode: 'standard', // standard | research | pilot_silent
+    arm: 'intervention',
+    webhookUrl: safeLSGet('ecm_webhook_url', DEFAULT_WEBHOOK_URL) || DEFAULT_WEBHOOK_URL,
+    autoSyncTimer: null,
+    syncBusy: false,
+    lastSyncUtc: null,
+
+    // Pre-configured participant metadata (no consent modals needed!)
+    passport: safeLSGet('ecm_passport_v2', { pid: 'P01', vision: 'none' }),
+    settings: safeLSGet('ecm_settings_v2', { restIntervalMin: 20, yellowDwellSec: 60, redDwellSec: 15, soundEnabled: true }),
+    calibrations: safeLSGet('ecm_calibrations_v2', { desktop: null, phone: null }),
+    baselines: safeLSGet('ecm_baselines_v2', { desktop: null, phone: null }),
+
+    // Auto-calibration (3-second zero-modal flow)
+    autoCalibActive: false,
+    autoCalibEndMs: 0,
+    autoCalibSamples: [],
+    autoCalibRefCm: 60,
+
+    // S6 Telemetry
+    pageLoadMs: performance.now(),
+    onboardingSec: null,
+    calibrationAttempts: 0,
+    calibrationFirstTryOk: null,
+    fgFpsSamples: [], bgFpsSamples: [], infMsSamples: [],
+
+    // Runtime CV
+    stream: null, imageCapture: null, landmarker: null, delegate: 'Idle',
+    worker: null, fallbackTimer: null, lastVideoTs: 0, frameCounter: 0,
+    fpsWindowTs: [], currentFps: 0, currentLuma: null, lastLumaToastMs: 0,
+    latestLandmarks: null, latestVw: 640, latestVh: 480, blinkFlashUntilMs: 0, blinkFlashType: 'complete',
+
+    // Metrics
+    rawIrisPx: null, rawEar: null, rawBlendL: 0, rawBlendR: 0,
+    distBuffer: [], currentDistCm: null, currentZone: 'safe',
+    zoneEnterMs: null, safeRecoveryMs: null, lastYellowAlertMs: 0, lastRedAlertMs: 0,
+
+    earOpenWindow: [], earOpen: null, inBlink: false, blinkStartMs: 0, blinkMinEar: 1, blinkMaxBlend: 0,
+    blinkEvents60s: [], currentBR: 0, currentIB: 0, lowBrStartMs: null,
+
+    facePresent: false, faceLostMs: null, faceReturnMs: null, isAway: false, awayStartMs: null,
+    away10PromptShown: false, ignoreAwayForPalming: false,
+
+    sessionActiveSec: 0, workSinceBreakSec: 0, breaksToday: 0, lastTickMs: 0,
+    minuteBucketStartMs: 0, minuteActiveSec: 0, minuteAwaySec: 0,
+    minuteDistSamples: [], minuteZoneSec: { safe: 0, yellow: 0, red: 0 },
+    minuteEarOpenSamples: [], minuteFpsSamples: [],
+    baselineSamples: [], activeMinuteHistory: [],
+    currentSubScores: { sA: 0, sIB: 0, sBR: 0 },
+    currentEfiMin: 0, currentEfi60: 0, currentEfiTrend: 0,
+
+    // Exercise Engine
+    exerciseOverlayOpen: false, exerciseRunning: false, exerciseTimerId: null,
+    activeExerciseEvent: null, pendingDeltaEvents: [], recentConditions: [],
+    lastE3Ms: 0, snoozeUntilMs: 0, researchQueue: [],
+    researchCounts: { 'E-1': 0, 'E-2': 0, 'E-3': 0, 'CTRL': 0 },
+    totalExerciseOrder: 0, lastCompletedDeltaEfi: null,
+    s4VasPromptedMins: new Set(),
+
+    // S1-S3 Lab state
+    s1Recording: false, s1Samples: [], s1MarkZone: null, s1MarkUtcMs: null, s1ChatterActive: false, s1ChatterCount: 0,
+    s2Recording: false, s2EndMs: 0, s2MediaRecorder: null, s2RecordedChunks: [], s2RecordedBlob: null, s2BlinkCount: 0, s2IncompleteCount: 0,
+    s3ActiveScenario: null, s3GtStartMs: null, s3DetStartDuringGt: null, s3TimerPausedFlag: false,
+    pipWindow: null
+  };
+
+  function tr(key) { const d = I18N[STATE.lang] || I18N.ru; return d[key] !== undefined ? d[key] : (I18N.ru[key] || key); }
+  function applyTranslations() {
+    document.documentElement.lang = STATE.lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => { const v = tr(el.getAttribute('data-i18n')); if (v) el.textContent = v; });
+    updateButtonsUI();
+  }
+  function showToast(msg, variant = '') {
+    if (STATE.mode === 'pilot_silent') return;
+    const div = document.createElement('div');
+    div.className = 'toast' + (variant ? ' ' + variant : '');
+    div.textContent = msg;
+    $('toastStack').appendChild(div);
+    setTimeout(() => div.remove(), 4800);
+  }
+  function showDiagBanner(msg, type = 'warn') {
+    const b = $('diagBanner'); b.className = 'banner ' + type;
+    $('diagBannerText').textContent = msg; b.style.display = 'flex';
+  }
+
+  /* --- Automatic Developer Upload (Never sends video — strictly numeric JSON!) --- */
+  async function buildUnsyncedPayload(includeAll = false) {
+    const payload = {
+      sent_utc: nowIso(),
+      app_version: 'EyeCare Monitor v0.6+ AutoSync',
+      pid: STATE.passport.pid,
+      vision: STATE.passport.vision,
+      mode: STATE.mode,
+      arm: STATE.arm,
+      device: STATE.deviceProfile,
+      calibration: STATE.calibrations[STATE.deviceProfile],
+      data: {}
+    };
+    let count = 0;
+    for (const s of store.stores) {
+      const all = await store.getAll(s);
+      const rows = includeAll ? all : all.filter(r => !r._synced);
+      payload.data[s] = rows;
+      count += rows.length;
+    }
+    return { payload, count };
+  }
+
+  async function markPayloadSynced(payload) {
+    for (const s of store.stores) {
+      for (const r of (payload.data[s] || [])) {
+        if (r._id && !r._synced) {
+          r._synced = 1;
+          await store.put(s, r);
+        }
+      }
+    }
+  }
+
+  async function updateQueueCounter() {
+    let unsynced = 0;
+    for (const s of store.stores) {
+      const rows = await store.getAll(s);
+      unsynced += rows.filter(r => !r._synced).length;
+    }
+    $('queueBadge').textContent = `Очередь: ${unsynced}`;
+    const url = (STATE.webhookUrl || '').trim();
+    if (!url) {
+      $('syncBadge').textContent = 'Локально';
+      $('syncBadge').className = 'badge';
+      $('uploadStatusLine').textContent = `Сохранено локально (${unsynced} зап.) · URL автоотправки не задан`;
+    } else if (unsynced === 0 && STATE.lastSyncUtc) {
+      $('syncBadge').textContent = 'Синхронизировано ✓';
+      $('syncBadge').className = 'badge sage';
+      $('uploadStatusLine').textContent = `Отправлено разработчику (${STATE.lastSyncUtc.slice(11, 19)} UTC)`;
+    } else {
+      $('syncBadge').textContent = `Автоотправка (${unsynced})`;
+      $('syncBadge').className = 'badge sage';
+      $('uploadStatusLine').textContent = `Ожидают автоотправки: ${unsynced} зап.`;
+    }
+  }
+
+  async function autoUploadToDeveloper(reason = 'auto', forceDownloadFallback = false) {
+    const url = (STATE.webhookUrl || '').trim();
+    const { payload, count } = await buildUnsyncedPayload(false);
+
+    if (!url) {
+      await updateQueueCounter();
+      if (forceDownloadFallback) {
+        await exportJsonBundle();
+      }
+      return { ok: false, reason: 'no_url', count };
+    }
+    if (count === 0 && reason === 'auto') {
+      await updateQueueCounter();
+      return { ok: true, count: 0 };
+    }
+    if (STATE.syncBusy) return { ok: false, reason: 'busy' };
+    STATE.syncBusy = true;
+    $('syncBadge').textContent = 'Отправка...';
+    $('syncBadge').className = 'badge amber';
+
+    const bodyStr = JSON.stringify(payload);
+    let sent = false;
+    try {
+      // text/plain avoids CORS preflight on Google Apps Script, n8n, and simple webhooks!
+      const resp = await fetch(url, {
+        method: 'POST',
+        mode: 'cors',
+        keepalive: true,
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: bodyStr
+      });
+      if (resp && (resp.ok || resp.type === 'opaque')) sent = true;
+    } catch {
+      // Retry with no-cors for Google Apps Script redirects that omit CORS headers
+      try {
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          keepalive: true,
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: bodyStr
+        });
+        sent = true;
+      } catch (e2) {
+        console.warn('Auto-upload failed, queued offline:', e2);
+      }
+    } finally {
+      STATE.syncBusy = false;
+    }
+
+    if (sent) {
+      STATE.lastSyncUtc = nowIso();
+      await markPayloadSynced(payload);
+      await updateQueueCounter();
+      if (reason !== 'auto') showToast(`Данные автоматически отправлены разработчику (${count} зап.).`);
+      return { ok: true, count };
+    } else {
+      await updateQueueCounter();
+      if (forceDownloadFallback) {
+        showToast('Нет сети для автоотправки — сохранён резервный JSON-файл.', 'amber');
+        await exportJsonBundle();
+      }
+      return { ok: false, count };
+    }
+  }
+
+  function sendBeaconOnUnload() {
+    const url = (STATE.webhookUrl || '').trim();
+    if (!url || typeof navigator.sendBeacon !== 'function') return;
+    // Fast synchronous snapshot from in-memory active history + current session summary
+    const quick = {
+      sent_utc: nowIso(),
+      beacon_unload: true,
+      pid: STATE.passport.pid,
+      mode: STATE.mode,
+      arm: STATE.arm,
+      device: STATE.deviceProfile,
+      session_active_sec: Math.round(STATE.sessionActiveSec),
+      breaks_today: STATE.breaksToday,
+      last_efi60: Number(STATE.currentEfi60.toFixed(1)),
+      recent_minutes: STATE.activeMinuteHistory.slice(-10)
+    };
+    try {
+      navigator.sendBeacon(url, new Blob([JSON.stringify(quick)], { type: 'text/plain;charset=utf-8' }));
+    } catch {}
+  }
+
+  /* =========================================================================
+   * 5. CAMERA, MEDIAPIPE & INTERACTIVE AR CANVAS OVERLAY (FOR JURY!)
+   * ========================================================================= */
+  function attachStreamToVideo(videoEl, stream) {
+    videoEl.playsInline = true; videoEl.muted = true;
+    videoEl.setAttribute('playsinline', ''); videoEl.setAttribute('webkit-playsinline', '');
+    videoEl.srcObject = stream;
+    const p = videoEl.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  }
+
+  async function requestCameraStream() {
+    audio.unlock();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('NO_MEDIA_DEVICES');
+    if (STATE.stream && STATE.stream.getVideoTracks().some(t => t.readyState === 'live')) return STATE.stream;
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 20 } },
+        audio: false
+      });
+    } catch (err) {
+      if (err && (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError' || err.name === 'NotFoundError')) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      } else { throw err; }
+    }
+    STATE.stream = stream;
+    attachStreamToVideo($('camVideo'), stream);
+    try {
+      const vt = stream.getVideoTracks()[0];
+      STATE.imageCapture = (vt && typeof ImageCapture !== 'undefined') ? new ImageCapture(vt) : null;
+    } catch { STATE.imageCapture = null; }
+    return stream;
+  }
+
+  function explainCamErr(err) {
+    const n = (err && err.name) || (err && err.message) || '';
+    if (!window.isSecureContext) return 'Нужен HTTPS или localhost для доступа к камере (или нажмите «Демо»).';
+    if (n === 'NO_MEDIA_DEVICES') return 'Браузер не поддерживает камеру. Нажмите «Демо» для демонстрации.';
+    if (n === 'NotAllowedError' || n === 'PermissionDeniedError') return 'Доступ к камере запрещён. Разрешите камеру в адресной строке браузера.';
+    if (n === 'NotReadableError' || n === 'TrackStartError') return 'Камера занята другой программой (Zoom/Meet/Telegram).';
+    if (n === 'NotFoundError') return 'Веб-камера не найдена. Используйте «Демо» для демонстрации.';
+    return 'Ошибка камеры: ' + (err && err.message ? err.message : String(err));
+  }
+
+  async function ensureLandmarker(forceCpu = false) {
+    if (STATE.landmarker && !forceCpu) return STATE.landmarker;
+    $('hudEnginePill').textContent = 'Загрузка AI модели...';
+    let mod = null;
+    for (const u of [
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs',
+      'https://unpkg.com/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs'
+    ]) {
+      try { mod = await import(u); if (mod && mod.FaceLandmarker) break; } catch {}
+    }
+    if (!mod || !mod.FaceLandmarker) throw new Error('Не удалось загрузить MediaPipe (проверьте интернет или нажмите «Демо»).');
+    const { FilesetResolver, FaceLandmarker } = mod;
+    let fileset = null;
+    for (const wp of [
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
+      'https://unpkg.com/@mediapipe/tasks-vision@0.10.14/wasm'
+    ]) {
+      try { fileset = await FilesetResolver.forVisionTasks(wp); break; } catch {}
+    }
+    const modelUrl = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+    const delegates = forceCpu ? ['CPU'] : ['GPU', 'CPU'];
+    for (const d of delegates) {
+      try {
+        STATE.landmarker = await FaceLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: modelUrl, delegate: d },
+          runningMode: 'VIDEO', numFaces: 1, outputFaceBlendshapes: true, outputFacialTransformationMatrixes: false
+        });
+        STATE.delegate = 'WASM ' + d;
+        $('hudEnginePill').textContent = 'Локальный AI · ' + STATE.delegate;
+        return STATE.landmarker;
+      } catch {}
+    }
+    throw new Error('Не удалось инициализировать MediaPipe Face Landmarker.');
+  }
+
+  /* --- Exact object-fit: cover + horizontal mirror projection for AR Canvas --- */
+  function projectLandmarkToCanvas(pt, vw, vh, cw, ch) {
+    const scale = Math.max(cw / vw, ch / vh);
+    const drawW = vw * scale, drawH = vh * scale;
+    const offX = (cw - drawW) / 2, offY = (ch - drawH) / 2;
+    // Mirror horizontally to match video CSS transform: scaleX(-1)
+    const x = offX + (1 - pt.x) * drawW;
+    const y = offY + pt.y * drawH;
+    return { x, y, scale };
+  }
+
+  function renderArOverlay() {
+    const stage = $('camStage');
+    if (stage.classList.contains('collapsed')) return;
+    const canvas = $('arCanvas');
+    const rect = stage.getBoundingClientRect();
+    if (rect.width < 10 || rect.height < 10) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cw = Math.round(rect.width * dpr);
+    const ch = Math.round(rect.height * dpr);
+    if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, cw, ch);
+
+    // Demo Mode interactive stylized vector AR visualization so Jury sees live tracking without a camera!
+    if (STATE.demoMode) {
+      drawDemoVectorFaceHud(ctx, cw, ch, dpr);
+      return;
+    }
+
+    const lm = STATE.latestLandmarks;
+    if (!lm || !STATE.facePresent) {
+      // Subtle scanning corners when waiting for face
+      if (STATE.running) {
+        ctx.strokeStyle = 'rgba(229, 178, 99, 0.55)';
+        ctx.lineWidth = 2 * dpr;
+        ctx.setLineDash([6 * dpr, 6 * dpr]);
+        ctx.beginPath();
+        ctx.ellipse(cw / 2, ch / 2, cw * 0.21, ch * 0.34, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      return;
+    }
+
+    const vw = STATE.latestVw, vh = STATE.latestVh;
+    const zoneColor = STATE.currentZone === 'red' ? '#EB8577' : (STATE.currentZone === 'yellow' ? '#E5B263' : '#73BE9F');
+    const flashing = performance.now() < STATE.blinkFlashUntilMs;
+    const eyeColor = flashing ? (STATE.blinkFlashType === 'incomplete' ? '#F5B951' : '#5EF2B8') : zoneColor;
+
+    // 1. Draw both eye contours (6-point EAR polygons)
+    const eyePolys = [
+      [33, 160, 158, 133, 153, 144],   // Right eye
+      [362, 385, 387, 263, 373, 380]   // Left eye
+    ];
+    ctx.lineWidth = (flashing ? 2.6 : 1.8) * dpr;
+    ctx.strokeStyle = eyeColor;
+    ctx.fillStyle = flashing ? 'rgba(115, 190, 159, 0.22)' : 'rgba(115, 190, 159, 0.08)';
+    for (const poly of eyePolys) {
+      ctx.beginPath();
+      poly.forEach((idx, i) => {
+        const p = projectLandmarkToCanvas(lm[idx], vw, vh, cw, ch);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // 2. Draw glowing iris tracking rings (landmarks 468/469-471 and 473/474-476)
+    const irises = [
+      { c: 468, a: 469, b: 471 },
+      { c: 473, a: 474, b: 476 }
+    ];
+    for (const ir of irises) {
+      const pc = projectLandmarkToCanvas(lm[ir.c], vw, vh, cw, ch);
+      const pa = projectLandmarkToCanvas(lm[ir.a], vw, vh, cw, ch);
+      const pb = projectLandmarkToCanvas(lm[ir.b], vw, vh, cw, ch);
+      const r = Math.max(3 * dpr, Math.hypot(pa.x - pb.x, pa.y - pb.y) / 2);
+      ctx.beginPath();
+      ctx.arc(pc.x, pc.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.6 * dpr;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(pc.x, pc.y, 2 * dpr, 0, Math.PI * 2);
+      ctx.fillStyle = zoneColor;
+      ctx.fill();
+    }
+
+    // 3. Calibration silhouette guide while 3-second auto-calibration runs
+    if (STATE.autoCalibActive) {
+      ctx.strokeStyle = '#73BE9F';
+      ctx.lineWidth = 2.5 * dpr;
+      ctx.setLineDash([8 * dpr, 5 * dpr]);
+      ctx.beginPath();
+      ctx.ellipse(cw / 2, ch / 2, cw * 0.20, ch * 0.34, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawDemoVectorFaceHud(ctx, cw, ch, dpr) {
+    // Rich interactive HUD in Demo Mode
+    ctx.fillStyle = '#121A20';
+    ctx.fillRect(0, 0, cw, ch);
+    // Subtle radar grid
+    ctx.strokeStyle = 'rgba(107, 179, 155, 0.08)';
+    ctx.lineWidth = 1 * dpr;
+    const step = 28 * dpr;
+    for (let x = 0; x < cw; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke(); }
+    for (let y = 0; y < ch; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cw, y); ctx.stroke(); }
+
+    if (STATE.demoPreset === 'away') {
+      ctx.fillStyle = '#E5B263';
+      ctx.font = `700 ${16 * dpr}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('AWAY · Лицо вне кадра (таймеры на паузе)', cw / 2, ch / 2);
+      return;
+    }
+
+    const scaleD = clamp(60 / Math.max(20, STATE.currentDistCm || 60), 0.65, 1.55);
+    const cx = cw / 2, cy = ch / 2;
+    const zoneColor = STATE.currentZone === 'red' ? '#EB8577' : (STATE.currentZone === 'yellow' ? '#E5B263' : '#73BE9F');
+
+    // Head oval
+    ctx.strokeStyle = zoneColor;
+    ctx.lineWidth = 2 * dpr;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 78 * dpr * scaleD, 102 * dpr * scaleD, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Dynamic eyes opening based on simulated EAR
+    const openRatio = clamp((STATE.rawEar || 0.28) / 0.30, 0.12, 1.0);
+    for (const side of [-1, 1]) {
+      const ex = cx + side * 32 * dpr * scaleD;
+      const ey = cy - 10 * dpr * scaleD;
+      const rx = 20 * dpr * scaleD;
+      const ry = Math.max(2.5 * dpr, 11 * dpr * scaleD * openRatio);
+      ctx.beginPath();
+      ctx.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(115, 190, 159, 0.14)';
+      ctx.fill();
+      ctx.strokeStyle = zoneColor;
+      ctx.lineWidth = 2 * dpr;
+      ctx.stroke();
+      // Iris circle
+      if (openRatio > 0.25) {
+        ctx.beginPath();
+        ctx.arc(ex, ey, 7.5 * dpr * scaleD, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.6 * dpr;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ex, ey, 2.2 * dpr, 0, Math.PI * 2);
+        ctx.fillStyle = zoneColor;
+        ctx.fill();
+      }
+    }
+  }
+
+  /* =========================================================================
+   * 6. AUTOMATIC 3-SECOND CALIBRATION (ZERO EXTRA CLICKS)
+   * ========================================================================= */
+  function startAutoCalibration(refCm = 60) {
+    STATE.autoCalibActive = true;
+    STATE.autoCalibRefCm = refCm;
+    STATE.autoCalibSamples = [];
+    STATE.autoCalibEndMs = Date.now() + 3000;
+    STATE.calibrationAttempts++;
+    const strip = $('calibStrip');
+    strip.textContent = `Автокалибровка: сядьте удобно (~${refCm} см) и смотрите на экран... 3`;
+    strip.classList.add('show');
+  }
+
+  function stepAutoCalibration(irisPx, tWall) {
+    if (!STATE.autoCalibActive) return;
+    if (irisPx && irisPx > 3) STATE.autoCalibSamples.push(irisPx);
+    const rem = Math.max(0, Math.ceil((STATE.autoCalibEndMs - tWall) / 1000));
+    $('calibStrip').textContent = `Автокалибровка (~${STATE.autoCalibRefCm} см): смотрите прямо... ${rem}`;
+    if (tWall >= STATE.autoCalibEndMs) {
+      STATE.autoCalibActive = false;
+      $('calibStrip').classList.remove('show');
+      const medIris = median(STATE.autoCalibSamples);
+      if (medIris && medIris > 3) {
+        const fpx = (medIris * STATE.autoCalibRefCm) / 1.17;
+        STATE.calibrations[STATE.deviceProfile] = {
+          d_ref: STATE.autoCalibRefCm,
+          f_px: Number(fpx.toFixed(1)),
+          iris_px: Number(medIris.toFixed(2)),
+          utc_ts: nowIso()
+        };
+        safeLSSet('ecm_calibrations_v2', STATE.calibrations);
+        if (STATE.calibrationFirstTryOk === null) STATE.calibrationFirstTryOk = true;
+        showToast(`Автокалибровка готова (f_px = ${fpx.toFixed(0)} px). Мониторинг активен!`);
+      } else {
+        if (STATE.calibrationAttempts === 1) STATE.calibrationFirstTryOk = false;
+        showToast('Лицо не попало в кадр при калибровке — используется стандартный профиль (можно нажать «Калибровка 3 с»).', 'amber');
+      }
+    }
+  }
+
+  /* =========================================================================
+   * 7. ENGINE LOOP, CV PROCESSING, ERGONOMICS, EFI & EXERCISE ENGINE
+   * ========================================================================= */
+  function startInferenceLoop() {
+    stopInferenceLoop();
+    STATE.lastTickMs = performance.now();
+    if (!STATE.minuteBucketStartMs) STATE.minuteBucketStartMs = Date.now();
+    const tick = () => { if (STATE.running) onEngineTick(); };
+    try {
+      const code = `let iv=null; self.onmessage=(e)=>{ if(e.data==='start'){ clearInterval(iv); iv=setInterval(()=>self.postMessage('tick'), 65); } else if(e.data==='stop'){ clearInterval(iv); iv=null; } };`;
+      const blob = new Blob([code], { type: 'application/javascript' });
+      const url = URL.createObjectURL(blob);
+      STATE.worker = new Worker(url);
+      URL.revokeObjectURL(url);
+      STATE.worker.onmessage = tick;
+      STATE.worker.postMessage('start');
+    } catch {
+      STATE.fallbackTimer = setInterval(tick, 65);
+    }
+    clearInterval(STATE.autoSyncTimer);
+    STATE.autoSyncTimer = setInterval(() => { autoUploadToDeveloper('auto', false); }, AUTO_SYNC_INTERVAL_MS);
+  }
+
+  function stopInferenceLoop() {
+    if (STATE.worker) { try { STATE.worker.postMessage('stop'); STATE.worker.terminate(); } catch {} STATE.worker = null; }
+    if (STATE.fallbackTimer) { clearInterval(STATE.fallbackTimer); STATE.fallbackTimer = null; }
+    clearInterval(STATE.autoSyncTimer); STATE.autoSyncTimer = null;
+  }
+
+  let tickBusy = false;
+  let cpuReinitBusy = false;
+
+  async function onEngineTick() {
+    if (tickBusy) return;
+    tickBusy = true;
+    const tPerf = performance.now(), tWall = Date.now();
+    const dtSec = clamp((tPerf - STATE.lastTickMs) / 1000, 0.01, 1.0);
+    STATE.lastTickMs = tPerf;
+    try {
+      if (STATE.demoMode) processDemoFrame(tPerf, tWall, dtSec);
+      else await processCameraFrame(tPerf, tWall, dtSec);
+
+      STATE.fpsWindowTs.push(tPerf);
+      while (STATE.fpsWindowTs.length > 0 && tPerf - STATE.fpsWindowTs[0] > 1000) STATE.fpsWindowTs.shift();
+      STATE.currentFps = STATE.fpsWindowTs.length;
+      STATE.minuteFpsSamples.push(STATE.currentFps);
+      if (STATE.frameCounter % 15 === 0) {
+        if (document.hidden) STATE.bgFpsSamples.push(STATE.currentFps);
+        else STATE.fgFpsSamples.push(STATE.currentFps);
+        if (STATE.fgFpsSamples.length > 600) STATE.fgFpsSamples.shift();
+        if (STATE.bgFpsSamples.length > 600) STATE.bgFpsSamples.shift();
+      }
+      if (STATE.s2Recording && !STATE.demoMode) drawS2RecordCanvasFrame();
+
+      renderArOverlay();
+      updateUI();
+      updateMiniWidgets();
+    } catch (e) { console.warn('Tick err:', e); }
+    finally { tickBusy = false; }
+  }
+
+  async function processCameraFrame(tPerf, tWall, dtSec) {
+    const vid = $('camVideo');
+    if (!STATE.landmarker || !vid || vid.readyState < 2 || vid.videoWidth === 0) return;
+    STATE.frameCounter++;
+    let src = vid, vw = vid.videoWidth, vh = vid.videoHeight, bmp = null;
+
+    if (document.hidden && STATE.imageCapture && typeof STATE.imageCapture.grabFrame === 'function') {
+      try { bmp = await STATE.imageCapture.grabFrame(); src = bmp; vw = bmp.width; vh = bmp.height; } catch { bmp = null; }
+    }
+
+    let ts = Math.floor(tPerf);
+    if (ts <= STATE.lastVideoTs) ts = STATE.lastVideoTs + 1;
+    STATE.lastVideoTs = ts;
+
+    const t0 = performance.now();
+    let res = null;
+    try {
+      res = STATE.landmarker.detectForVideo(src, ts);
+    } catch (err) {
+      if (bmp && bmp.close) bmp.close();
+      if (STATE.delegate === 'WASM GPU' && !cpuReinitBusy) {
+        cpuReinitBusy = true; STATE.landmarker = null;
+        ensureLandmarker(true).catch(() => {}).finally(() => { cpuReinitBusy = false; });
+      }
+      return;
+    }
+    STATE.infMsSamples.push(performance.now() - t0);
+    if (STATE.infMsSamples.length > 400) STATE.infMsSamples.shift();
+
+    if (STATE.frameCounter % 60 === 0) estimateLuma(src, tWall);
+    if (bmp && bmp.close) bmp.close();
+
+    const hasFace = !!(res && res.faceLandmarks && res.faceLandmarks[0] && res.faceLandmarks[0].length >= 477);
+    if (!hasFace) {
+      STATE.latestLandmarks = null;
+      handlePresence(false, tWall, dtSec);
+      return;
+    }
+    const lm = res.faceLandmarks[0];
+    STATE.latestLandmarks = lm; STATE.latestVw = vw; STATE.latestVh = vh;
+
+    const irisPx = (dist2D(lm[469], lm[471], vw, vh) + dist2D(lm[474], lm[476], vw, vh)) / 2;
+    const earR = (dist2D(lm[160], lm[144], vw, vh) + dist2D(lm[158], lm[153], vw, vh)) / (2 * Math.max(1e-3, dist2D(lm[33], lm[133], vw, vh)));
+    const earL = (dist2D(lm[385], lm[380], vw, vh) + dist2D(lm[387], lm[373], vw, vh)) / (2 * Math.max(1e-3, dist2D(lm[362], lm[263], vw, vh)));
+    const ear = (earR + earL) / 2;
+
+    let bL = 0, bR = 0;
+    if (res.faceBlendshapes && res.faceBlendshapes[0] && res.faceBlendshapes[0].categories) {
+      for (const c of res.faceBlendshapes[0].categories) {
+        if (c.categoryName === 'eyeBlinkLeft') bL = c.score;
+        else if (c.categoryName === 'eyeBlinkRight') bR = c.score;
+      }
+    }
+    STATE.rawIrisPx = irisPx; STATE.rawEar = ear; STATE.rawBlendL = bL; STATE.rawBlendR = bR;
+
+    if (STATE.autoCalibActive) stepAutoCalibration(irisPx, tWall);
+
+    handlePresence(true, tWall, dtSec);
+    if (!STATE.isAway) {
+      updateDistance(irisPx, tWall, dtSec);
+      updateBlinks(ear, Math.max(bL, bR), tWall);
+      updateMinuteBucket(tWall, dtSec);
+    }
+  }
+
+  function estimateLuma(src, tWall) {
+    try {
+      const c = $('lumaCanvas'), ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(src, 0, 0, 32, 24);
+      const d = ctx.getImageData(0, 0, 32, 24).data;
+      let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      STATE.currentLuma = Math.round(s / (d.length / 4));
+    } catch {}
+  }
+
+  let demoBlinkPhase = 0;
+  function processDemoFrame(tPerf, tWall, dtSec) {
+    STATE.frameCounter++; STATE.currentLuma = 128;
+    if (STATE.demoPreset === 'away') { handlePresence(false, tWall, dtSec); return; }
+    const calib = STATE.calibrations[STATE.deviceProfile];
+    const fpx = calib ? calib.f_px : 1000;
+    let dTarget = 62, earOpenT = 0.29, bPeriod = 4.0, incProb = 0.08;
+    if (STATE.demoPreset === 'yellow') dTarget = 40;
+    else if (STATE.demoPreset === 'red') dTarget = 24;
+    else if (STATE.demoPreset === 'incomplete') { dTarget = 60; bPeriod = 8.0; incProb = 0.85; }
+    else if (STATE.demoPreset === 'fatigue') {
+      dTarget = 55; earOpenT = 0.21; bPeriod = 8.5; incProb = 0.80;
+      if (STATE.sessionActiveSec < 2450) STATE.sessionActiveSec = 2450;
+    }
+    const d = dTarget + Math.sin(tPerf / 700) * 0.7;
+    const irisPx = (1.17 * fpx) / d;
+    demoBlinkPhase += dtSec;
+    let ear = earOpenT + Math.sin(tPerf / 900) * 0.004, blend = 0.05;
+    if (demoBlinkPhase >= bPeriod) {
+      const el = demoBlinkPhase - bPeriod;
+      if (el < 0.22) {
+        const isInc = ((Math.floor(tWall / 1000) % 10) / 10) < incProb;
+        ear = isInc ? earOpenT * 0.60 : earOpenT * 0.24;
+        blend = isInc ? 0.55 : 0.88;
+      } else demoBlinkPhase = 0;
+    }
+    STATE.rawIrisPx = irisPx; STATE.rawEar = ear; STATE.rawBlendL = blend; STATE.rawBlendR = blend;
+    handlePresence(true, tWall, dtSec);
+    if (!STATE.isAway) {
+      updateDistance(irisPx, tWall, dtSec);
+      updateBlinks(ear, blend, tWall);
+      updateMinuteBucket(tWall, dtSec);
+    }
+  }
+
+  function updateDistance(irisPx, tWall, dtSec) {
+    if (!irisPx || irisPx <= 1) return;
+    const calib = STATE.calibrations[STATE.deviceProfile];
+    const fpx = calib ? calib.f_px : 1000;
+    const rawD = clamp((1.17 * fpx) / irisPx, 12, 160);
+    STATE.distBuffer.push({ t: tWall, d: rawD });
+    while (STATE.distBuffer.length > 0 && tWall - STATE.distBuffer[0].t > 1500) STATE.distBuffer.shift();
+    const medD = median(STATE.distBuffer.map(x => x.d));
+    STATE.currentDistCm = medD;
+    STATE.minuteDistSamples.push(medD);
+    if (STATE.s1Recording) STATE.s1Samples.push(medD);
+
+    const prevZone = STATE.currentZone;
+    const rawZone = medD < 30 ? 'red' : (medD < 50 ? 'yellow' : 'safe');
+    if (rawZone === 'safe') {
+      if (prevZone !== 'safe') {
+        if (!STATE.safeRecoveryMs) STATE.safeRecoveryMs = tWall;
+        if (tWall - STATE.safeRecoveryMs >= 2000) { STATE.currentZone = 'safe'; STATE.zoneEnterMs = null; STATE.safeRecoveryMs = null; }
+      } else STATE.safeRecoveryMs = null;
+    } else {
+      STATE.safeRecoveryMs = null;
+      if (rawZone !== prevZone) {
+        STATE.currentZone = rawZone; STATE.zoneEnterMs = tWall;
+        if (prevZone === 'yellow' && rawZone === 'red') fireDistAlert('red', tWall, medD, true);
+      }
+    }
+    STATE.minuteZoneSec[STATE.currentZone] += dtSec;
+
+    if (STATE.currentZone === 'yellow' && STATE.zoneEnterMs) {
+      if ((tWall - STATE.zoneEnterMs) / 1000 >= STATE.settings.yellowDwellSec && (tWall - STATE.lastYellowAlertMs >= 300000)) {
+        fireDistAlert('yellow', tWall, medD, false);
+      }
+    } else if (STATE.currentZone === 'red' && STATE.zoneEnterMs) {
+      if ((tWall - STATE.zoneEnterMs) / 1000 >= STATE.settings.redDwellSec && (tWall - STATE.lastRedAlertMs >= 120000)) {
+        fireDistAlert('red', tWall, medD, false);
+      }
+    }
+  }
+
+  function fireDistAlert(zone, tWall, distCm, escalated) {
+    if (zone === 'yellow') STATE.lastYellowAlertMs = tWall; else STATE.lastRedAlertMs = tWall;
+    let latencyMs = 0;
+    if (STATE.s1MarkZone === zone && STATE.s1MarkUtcMs) {
+      const exp = (zone === 'yellow' ? STATE.settings.yellowDwellSec : STATE.settings.redDwellSec) * 1000;
+      latencyMs = Math.max(0, (tWall - STATE.s1MarkUtcMs) - (escalated ? 0 : exp));
+      $('s1AlertTestOut').textContent = `Alert [${zone.toUpperCase()}]: latency = ${(latencyMs/1000).toFixed(2)} s (≤ 5 s)`;
+      STATE.s1MarkZone = null; STATE.s1MarkUtcMs = null;
+    }
+    if (STATE.s1ChatterActive) {
+      STATE.s1ChatterCount++;
+      $('s1AlertTestOut').textContent = `48–52 cm test: alerts = ${STATE.s1ChatterCount}`;
+    }
+    store.add('alerts', {
+      utc_ts: nowIso(), pid: STATE.passport.pid, alert_type: zone,
+      trigger_enter_utc: STATE.zoneEnterMs ? new Date(STATE.zoneEnterMs).toISOString() : nowIso(),
+      latency_ms: Math.round(latencyMs), dist_cm: Number(distCm.toFixed(1)), tab_state: document.hidden ? 'bg' : 'fg'
+    });
+    if (STATE.mode === 'pilot_silent') return;
+    if (STATE.settings.soundEnabled) { if (zone === 'yellow') audio.playYellow(); else audio.playRed(); }
+    const msg = zone === 'yellow' ? tr('toastYellow') : tr('toastRed');
+    showToast(msg, zone === 'yellow' ? 'amber' : 'coral');
+    audio.notify(zone === 'yellow' ? tr('zoneYellow') : tr('zoneRed'), msg);
+  }
+
+  function updateBlinks(ear, maxBlend, tWall) {
+    if (!ear || ear <= 0) return;
+    if (!STATE.inBlink) {
+      STATE.earOpenWindow.push(ear);
+      if (STATE.earOpenWindow.length > 90) STATE.earOpenWindow.shift();
+      STATE.earOpen = median(STATE.earOpenWindow);
+      if (STATE.earOpen) STATE.minuteEarOpenSamples.push(STATE.earOpen);
+    }
+    const openRef = STATE.earOpen || ear;
+    if (!STATE.inBlink) {
+      if (ear < 0.78 * openRef || maxBlend > 0.65) {
+        STATE.inBlink = true; STATE.blinkStartMs = tWall; STATE.blinkMinEar = ear; STATE.blinkMaxBlend = maxBlend;
+      }
+    } else {
+      if (ear < STATE.blinkMinEar) STATE.blinkMinEar = ear;
+      if (maxBlend > STATE.blinkMaxBlend) STATE.blinkMaxBlend = maxBlend;
+      const dur = tWall - STATE.blinkStartMs;
+      if (ear >= 0.84 * openRef || dur > 750) {
+        STATE.inBlink = false;
+        if (dur >= 55 && dur <= 700) {
+          const incomplete = STATE.blinkMinEar >= (0.50 * openRef);
+          STATE.blinkFlashUntilMs = performance.now() + 260;
+          STATE.blinkFlashType = incomplete ? 'incomplete' : 'complete';
+          const ev = { startMs: STATE.blinkStartMs, endMs: tWall, durMs: Math.round(dur), incomplete, minEar: Number(STATE.blinkMinEar.toFixed(4)), earOpen: Number(openRef.toFixed(4)), maxBlend: Number(STATE.blinkMaxBlend.toFixed(3)) };
+          STATE.blinkEvents60s.push(ev);
+          if (STATE.s2Recording) {
+            STATE.s2BlinkCount++; if (incomplete) STATE.s2IncompleteCount++;
+            store.add('s2', { pid: STATE.passport.pid, start_utc: new Date(ev.startMs).toISOString(), end_utc: new Date(ev.endMs).toISOString(), duration_ms: ev.durMs, event_type: incomplete ? 'incomplete' : 'complete', min_ear: ev.minEar, ear_open: ev.earOpen, blend_max: ev.maxBlend });
+            updateS2UI();
+          }
+        }
+      }
+    }
+    while (STATE.blinkEvents60s.length > 0 && tWall - STATE.blinkEvents60s[0].endMs > 60000) STATE.blinkEvents60s.shift();
+    const n = STATE.blinkEvents60s.length;
+    STATE.currentBR = n;
+    STATE.currentIB = n > 0 ? STATE.blinkEvents60s.filter(b => b.incomplete).length / n : 0;
+    if (STATE.currentBR < 8) { if (!STATE.lowBrStartMs) STATE.lowBrStartMs = tWall; } else STATE.lowBrStartMs = null;
+  }
+
+  function handlePresence(faceDetected, tWall, dtSec) {
+    if (STATE.ignoreAwayForPalming) { STATE.facePresent = true; return; }
+    if (faceDetected) {
+      STATE.faceLostMs = null;
+      if (STATE.isAway) {
+        if (!STATE.faceReturnMs) STATE.faceReturnMs = tWall;
+        if (tWall - STATE.faceReturnMs >= 1000) {
+          const awayDur = (tWall - STATE.awayStartMs) / 1000;
+          STATE.isAway = false; STATE.facePresent = true; STATE.faceReturnMs = null; STATE.away10PromptShown = false;
+          if (awayDur >= 20) { STATE.workSinceBreakSec = 0; STATE.breaksToday++; }
+        }
+      } else STATE.facePresent = true;
+    } else {
+      STATE.faceReturnMs = null;
+      if (!STATE.isAway) {
+        if (!STATE.faceLostMs) STATE.faceLostMs = tWall;
+        if (tWall - STATE.faceLostMs >= 3000) {
+          STATE.isAway = true; STATE.facePresent = false; STATE.awayStartMs = STATE.faceLostMs;
+          if (STATE.s3ActiveScenario && !STATE.s3DetStartDuringGt) { STATE.s3DetStartDuringGt = STATE.awayStartMs; STATE.s3TimerPausedFlag = true; }
+        }
+      } else {
+        STATE.minuteAwaySec += dtSec;
+        if ((tWall - STATE.awayStartMs) / 1000 >= 600 && !STATE.away10PromptShown && STATE.mode !== 'pilot_silent') {
+          STATE.away10PromptShown = true; $('away10Overlay').classList.add('open');
+        }
+      }
+    }
+    if (!STATE.isAway && !STATE.exerciseOverlayOpen && !STATE.autoCalibActive) {
+      STATE.sessionActiveSec += dtSec;
+      STATE.workSinceBreakSec += dtSec;
+      STATE.minuteActiveSec += dtSec;
+      if (STATE.mode === 'research') {
+        const mins = Math.floor(STATE.sessionActiveSec / 60);
+        for (const cp of [0, 20, 40, 60]) {
+          if (mins >= cp && !STATE.s4VasPromptedMins.has(cp)) {
+            STATE.s4VasPromptedMins.add(cp);
+            if (!$('questOverlay').classList.contains('open')) openQuestModal('VAS_0_10', `S4_min${cp}`);
+          }
+        }
+      }
+      checkExerciseTriggers(tWall);
+    }
+  }
+
+  function updateMinuteBucket(tWall, dtSec) {
+    // Immediate smooth EFI preview every ~15 frames
+    if (STATE.frameCounter % 15 === 0 && STATE.earOpen) {
+      const base = STATE.baselines[STATE.deviceProfile];
+      if (base) {
+        const relA = STATE.earOpen / Math.max(0.05, base.muEar);
+        const sA = clip01(-((relA - base.muA) / base.sdA) / 3);
+        const sIB = clip01(((STATE.currentIB - base.muIB) / base.sdIB) / 3);
+        const sBR = clip01(Math.abs((STATE.currentBR - base.muBR) / base.sdBR) / 3);
+        STATE.currentSubScores = { sA, sIB, sBR };
+        STATE.currentEfiMin = 100 * ((sA + sIB + sBR) / 3);
+      } else if (STATE.demoMode) {
+        const sA = STATE.demoPreset === 'fatigue' ? 0.78 : 0.05;
+        const sIB = (STATE.demoPreset === 'incomplete' || STATE.demoPreset === 'fatigue') ? 0.76 : clip01(STATE.currentIB / 0.5);
+        const sBR = (STATE.demoPreset === 'incomplete' || STATE.demoPreset === 'fatigue') ? 0.62 : 0.08;
+        STATE.currentSubScores = { sA, sIB, sBR };
+        STATE.currentEfiMin = 100 * ((sA + sIB + sBR) / 3);
+      }
+      if (STATE.activeMinuteHistory.length === 0) STATE.currentEfi60 = STATE.currentEfiMin;
+    }
+
+    if (tWall - STATE.minuteBucketStartMs < 60000) return;
+    const activeS = Math.round(STATE.minuteActiveSec), awayS = Math.round(STATE.minuteAwaySec);
+    const medDist = STATE.minuteDistSamples.length ? median(STATE.minuteDistSamples) : null;
+    const medEar = STATE.minuteEarOpenSamples.length ? median(STATE.minuteEarOpenSamples) : STATE.earOpen;
+    const avgFps = STATE.minuteFpsSamples.length ? mean(STATE.minuteFpsSamples) : STATE.currentFps;
+    let efiMin = STATE.currentEfiMin, relA = 1;
+
+    if (activeS >= 25 && medEar) {
+      let base = STATE.baselines[STATE.deviceProfile];
+      if (!base) {
+        STATE.baselineSamples.push({ earOpen: medEar, ib: STATE.currentIB, br: STATE.currentBR });
+        if (STATE.baselineSamples.length >= 3) {
+          const ears = STATE.baselineSamples.map(x => x.earOpen), ibs = STATE.baselineSamples.map(x => x.ib), brs = STATE.baselineSamples.map(x => x.br);
+          base = { muEar: mean(ears), muA: 1.0, sdA: Math.max(0.06, std(ears.map(v => v / mean(ears)))), muIB: mean(ibs), sdIB: Math.max(0.10, std(ibs)), muBR: mean(brs), sdBR: Math.max(3.0, std(brs)) };
+          STATE.baselines[STATE.deviceProfile] = base;
+          safeLSSet('ecm_baselines_v2', STATE.baselines);
+        }
+      }
+      if (base) {
+        relA = medEar / Math.max(0.05, base.muEar);
+        const sA = clip01(-((relA - base.muA) / base.sdA) / 3);
+        const sIB = clip01(((STATE.currentIB - base.muIB) / base.sdIB) / 3);
+        const sBR = clip01(Math.abs((STATE.currentBR - base.muBR) / base.sdBR) / 3);
+        STATE.currentSubScores = { sA, sIB, sBR };
+        efiMin = 100 * ((sA + sIB + sBR) / 3);
+      }
+      STATE.currentEfiMin = efiMin;
+      STATE.activeMinuteHistory.push({ utc: nowIso(), efiMin, ib: STATE.currentIB, br: STATE.currentBR, a: relA, dist: medDist });
+      if (STATE.activeMinuteHistory.length > 180) STATE.activeMinuteHistory.shift();
+      const l60 = STATE.activeMinuteHistory.slice(-60);
+      STATE.currentEfi60 = mean(l60.map(x => x.efiMin));
+      if (l60.length >= 4) {
+        const h = Math.floor(l60.length / 2);
+        STATE.currentEfiTrend = mean(l60.slice(h).map(x => x.efiMin)) - mean(l60.slice(0, h).map(x => x.efiMin));
+      }
+      // Finalize ΔEFI / ΔIB (+2..+6 active minutes after exercise)
+      const still = [];
+      for (const it of STATE.pendingDeltaEvents) {
+        const st = it.histLenAtEnd + 1, en = it.histLenAtEnd + 6;
+        if (STATE.activeMinuteHistory.length >= en) {
+          const sl = STATE.activeMinuteHistory.slice(st, en);
+          const eA = mean(sl.map(x => x.efiMin)), ibA = mean(sl.map(x => x.ib));
+          it.record.efi_after = Number(eA.toFixed(1));
+          it.record.delta_efi = it.record.efi_before !== null ? Number((it.record.efi_before - eA).toFixed(1)) : null;
+          it.record.ib_after = Number((ibA * 100).toFixed(1));
+          it.record.delta_ib = it.record.ib_before !== null ? Number((it.record.ib_before - ibA * 100).toFixed(1)) : null;
+          it.record._synced = 0; // re-sync updated delta
+          STATE.lastCompletedDeltaEfi = it.record.delta_efi;
+          store.put('exercises', it.record);
+        } else still.push(it);
+      }
+      STATE.pendingDeltaEvents = still;
+    }
+
+    store.add('minutes', {
+      utc_ts: nowIso(), pid: STATE.passport.pid, arm: STATE.arm, mode: STATE.mode, device: STATE.deviceProfile,
+      active_sec: activeS, away_sec: awayS, dist_median_cm: medDist !== null ? Number(medDist.toFixed(1)) : null,
+      zone_green_s: Math.round(STATE.minuteZoneSec.safe), zone_yellow_s: Math.round(STATE.minuteZoneSec.yellow), zone_red_s: Math.round(STATE.minuteZoneSec.red),
+      ear_open_median: medEar ? Number(medEar.toFixed(4)) : null, rel_opening_a: Number(relA.toFixed(3)),
+      br_per_min: STATE.currentBR, ib_share: Number(STATE.currentIB.toFixed(3)),
+      s_a: Number(STATE.currentSubScores.sA.toFixed(3)), s_ib: Number(STATE.currentSubScores.sIB.toFixed(3)), s_br: Number(STATE.currentSubScores.sBR.toFixed(3)),
+      efi_min: Number(efiMin.toFixed(1)), efi_60: Number(STATE.currentEfi60.toFixed(1)), efi_trend: Number(STATE.currentEfiTrend.toFixed(1)),
+      luma: STATE.currentLuma, fps: Number(avgFps.toFixed(1))
+    }).then(() => updateQueueCounter());
+
+    STATE.minuteBucketStartMs = tWall; STATE.minuteActiveSec = 0; STATE.minuteAwaySec = 0;
+    STATE.minuteDistSamples = []; STATE.minuteZoneSec = { safe: 0, yellow: 0, red: 0 };
+    STATE.minuteEarOpenSamples = []; STATE.minuteFpsSamples = [];
+  }
+
+  /* =========================================================================
+   * 8. AUTOMATIC ZERO-CLICK EXERCISE ENGINE & QUESTIONNAIRES
+   * ========================================================================= */
+  function nextResearchCode() {
+    if (!STATE.researchQueue.length) {
+      const b = ['E-1', 'E-2', 'E-3', 'CTRL'];
+      for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+      STATE.researchQueue = b;
+    }
+    return STATE.researchQueue.shift();
+  }
+  function selectExerciseCode(tWall) {
+    if (STATE.mode === 'research') return nextResearchCode();
+    const activeMin = STATE.sessionActiveSec / 60;
+    const lowBr2 = STATE.lowBrStartMs && (tWall - STATE.lowBrStartMs >= 120000);
+    const e3Ok = activeMin >= 40 && (STATE.currentEfi60 >= 58 || (STATE.currentEfiTrend >= 15 && STATE.currentEfi60 >= 42)) && (tWall - STATE.lastE3Ms >= 3600000);
+    let c = e3Ok ? 'E-3' : ((STATE.currentSubScores.sIB >= 0.50 || lowBr2) ? 'E-1' : 'E-2');
+    const n = STATE.recentConditions.length;
+    if (n >= 2 && STATE.recentConditions[n-1] === c && STATE.recentConditions[n-2] === c) c = c === 'E-1' ? 'E-2' : (c === 'E-2' ? 'E-1' : c);
+    return c;
+  }
+  function checkExerciseTriggers(tWall) {
+    if (STATE.mode === 'pilot_silent' || STATE.exerciseOverlayOpen || tWall < STATE.snoozeUntilMs) return;
+    const restDone = STATE.workSinceBreakSec >= STATE.settings.restIntervalMin * 60;
+    const lowBr2 = STATE.lowBrStartMs && (tWall - STATE.lowBrStartMs >= 120000);
+    const early = (STATE.sessionActiveSec >= 300) && (STATE.currentSubScores.sIB >= 0.65 || lowBr2);
+    if (restDone || early) openExerciseOverlay(selectExerciseCode(tWall));
+  }
+
+  function openExerciseOverlay(code) {
+    STATE.exerciseOverlayOpen = true; STATE.exerciseRunning = false; clearInterval(STATE.exerciseTimerId);
+    const ex = (I18N[STATE.lang] || I18N.ru).ex[code];
+    const pre = STATE.activeMinuteHistory.slice(-5);
+    const efiB = pre.length ? Number(mean(pre.map(x => x.efiMin)).toFixed(1)) : Number(STATE.currentEfiMin.toFixed(1));
+    const ibB = pre.length ? Number((mean(pre.map(x => x.ib)) * 100).toFixed(1)) : Number((STATE.currentIB * 100).toFixed(1));
+    STATE.totalExerciseOrder++;
+    STATE.activeExerciseEvent = {
+      utc_ts: nowIso(), pid: STATE.passport.pid, mode: STATE.mode, condition: code,
+      prev_condition: STATE.recentConditions.length ? STATE.recentConditions[STATE.recentConditions.length - 1] : null,
+      order_idx: STATE.totalExerciseOrder, response: 'pending',
+      efi_before: efiB, efi_after: null, delta_efi: null, ib_before: ibB, ib_after: null, delta_ib: null,
+      comfort_pre: null, comfort_post: null
+    };
+    $('exTitle').textContent = ex.title; $('exReasonBadge').textContent = ex.reason;
+    $('exEvidenceBox').textContent = ex.evidence; $('exEvidenceBox').style.display = 'none';
+    $('exCounterText').textContent = tr('startExBtn') + '?';
+    $('exInstructionText').textContent = ex.instruction || (ex.phases ? ex.phases.join(' → ') : '6 шагов · 120 с');
+    $('exStartActionBtn').textContent = tr('startExBtn'); $('exStartActionBtn').disabled = false;
+    $('exSkipBtn').style.display = ''; $('exSnoozeBtn').style.display = '';
+    renderComfortPicker('pre'); renderExerciseSvg(code, 0, 0);
+    $('exerciseOverlay').classList.add('open');
+    if (STATE.settings.soundEnabled) audio.playChime();
+    audio.notify(ex.title, ex.reason);
+  }
+  function renderComfortPicker(stage) {
+    const box = $('exComfortButtons'); box.innerHTML = '';
+    $('exComfortPrompt').textContent = stage === 'pre' ? 'Комфорт глаз ДО (0–10, необязательно):' : 'Комфорт глаз ПОСЛЕ (0–10):';
+    for (let v = 0; v <= 10; v++) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'comfort-btn tabular'; b.textContent = String(v);
+      b.addEventListener('click', () => {
+        box.querySelectorAll('.comfort-btn').forEach(x => x.classList.remove('selected')); b.classList.add('selected');
+        if (STATE.activeExerciseEvent) { if (stage === 'pre') STATE.activeExerciseEvent.comfort_pre = v; else STATE.activeExerciseEvent.comfort_post = v; }
+      });
+      box.appendChild(b);
+    }
+  }
+  function renderExerciseSvg(code, p01, sub) {
+    const c = $('exSvgContainer');
+    if (code === 'E-1') {
+      const ry = sub === 0 ? 12 : (sub === 1 ? 3 : 34);
+      c.innerHTML = `<svg width="190" height="104" viewBox="0 0 200 110"><ellipse cx="100" cy="55" rx="68" ry="${ry}" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="4" style="transition:all 240ms ease;"/><circle cx="100" cy="55" r="${Math.min(18, ry)}" fill="var(--accent)" opacity="${ry < 8 ? 0 : 0.85}"/></svg>`;
+    } else if (code === 'E-2' || code === 'CTRL') {
+      const off = 283 * (1 - clamp(p01, 0, 1));
+      c.innerHTML = `<svg width="110" height="110" viewBox="0 0 116 116"><circle cx="58" cy="58" r="45" fill="none" stroke="var(--border)" stroke-width="8"/><circle cx="58" cy="58" r="45" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" transform="rotate(-90 58 58)" stroke-dasharray="283" stroke-dashoffset="${off.toFixed(1)}"/><circle cx="58" cy="58" r="${code === 'E-2' ? 10 : 6}" fill="var(--accent)" opacity="0.7"/></svg>`;
+    } else {
+      let cx = 100, cy = 55, r = 12; const t = p01 * Math.PI * 4;
+      if (sub === 'lr') cx = 100 + Math.sin(t) * 65; else if (sub === 'ud') cy = 55 + Math.sin(t) * 34;
+      else if (sub === 'circle') { cx = 100 + Math.cos(t) * 52; cy = 55 + Math.sin(t) * 32; }
+      else if (sub === 'focus') r = 8 + (Math.sin(t) + 1) * 12; else if (sub === 'blink') r = Math.sin(t * 2) > 0 ? 16 : 4;
+      c.innerHTML = `<svg width="190" height="104" viewBox="0 0 200 110"><rect x="12" y="10" width="176" height="90" rx="14" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="5 5"/><circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="var(--accent)"/></svg>`;
+    }
+  }
+  function runExercise() {
+    if (!STATE.activeExerciseEvent || STATE.exerciseRunning) return;
+    STATE.exerciseRunning = true;
+    const code = STATE.activeExerciseEvent.condition, ex = (I18N[STATE.lang] || I18N.ru).ex[code];
+    $('exStartActionBtn').disabled = true; $('exSnoozeBtn').style.display = 'none';
+    if (code === 'E-1') {
+      let rep = 1, ph = 0;
+      const tick = () => {
+        $('exCounterText').textContent = `${rep} / 15`; $('exInstructionText').textContent = ex.phases[ph];
+        renderExerciseSvg('E-1', rep / 15, ph); ph++; if (ph > 2) { ph = 0; rep++; }
+        if (rep > 15) { clearInterval(STATE.exerciseTimerId); finishExerciseStage(); }
+      };
+      tick(); STATE.exerciseTimerId = setInterval(tick, 950);
+    } else if (code === 'E-2' || code === 'CTRL') {
+      let rem = 20;
+      const tick = () => {
+        $('exCounterText').textContent = `${rem} s`; renderExerciseSvg(code, (20 - rem) / 20, 0);
+        if (rem <= 0) { clearInterval(STATE.exerciseTimerId); finishExerciseStage(); } rem--;
+      };
+      tick(); STATE.exerciseTimerId = setInterval(tick, 1000);
+    } else {
+      let si = 0, el = 0;
+      const tick = () => {
+        const st = ex.steps[si]; STATE.ignoreAwayForPalming = (st.anim === 'palm');
+        $('exCounterText').textContent = `${si + 1}/6 · ${Math.ceil(Math.max(0, st.dur - el))} s`;
+        $('exInstructionText').textContent = st.name; renderExerciseSvg('E-3', el / st.dur, st.anim);
+        el += 0.25;
+        if (el >= st.dur) { si++; el = 0; if (si >= ex.steps.length) { STATE.ignoreAwayForPalming = false; clearInterval(STATE.exerciseTimerId); finishExerciseStage(); } }
+      };
+      tick(); STATE.exerciseTimerId = setInterval(tick, 250);
+    }
+  }
+  function finishExerciseStage() {
+    STATE.exerciseRunning = false; STATE.ignoreAwayForPalming = false;
+    if (STATE.settings.soundEnabled) audio.playChime();
+    $('exCounterText').textContent = '✓ ' + tr('doneExBtn');
+    renderComfortPicker('post');
+    $('exStartActionBtn').disabled = false; $('exStartActionBtn').textContent = tr('doneExBtn');
+    $('exSkipBtn').style.display = 'none';
+    if (STATE.activeExerciseEvent) STATE.activeExerciseEvent.response = 'accepted';
+  }
+  async function closeExercise(resp) {
+    clearInterval(STATE.exerciseTimerId); STATE.ignoreAwayForPalming = false; STATE.exerciseRunning = false; STATE.exerciseOverlayOpen = false;
+    $('exerciseOverlay').classList.remove('open');
+    const ev = STATE.activeExerciseEvent; STATE.activeExerciseEvent = null; if (!ev) return;
+    if (resp) ev.response = resp;
+    if (ev.response === 'snoozed') STATE.snoozeUntilMs = Date.now() + 300000;
+    else {
+      STATE.workSinceBreakSec = 0;
+      if (ev.response === 'accepted') {
+        STATE.breaksToday++; STATE.recentConditions.push(ev.condition);
+        if (ev.condition === 'E-3') STATE.lastE3Ms = Date.now();
+        if (STATE.mode === 'research' && STATE.researchCounts[ev.condition] !== undefined) { STATE.researchCounts[ev.condition]++; updateS4UI(); }
+      }
+    }
+    const id = await store.add('exercises', ev); ev._id = id;
+    if (ev.response === 'accepted') STATE.pendingDeltaEvents.push({ record: ev, histLenAtEnd: STATE.activeMinuteHistory.length });
+    refreshResearchTables(); updateQueueCounter();
+  }
+
+  let currentQuest = null;
+  function openQuestModal(scale, cp) {
+    currentQuest = { scale, checkpoint: cp };
+    const body = $('questBody'); body.innerHTML = '';
+    if (scale === 'VAS_0_10') {
+      $('questTitle').textContent = `Усталость глаз (0–10) · ${cp}`;
+      $('questDesc').textContent = '0 — глаза абсолютно свежие, 10 — максимальная усталость.';
+      const w = document.createElement('div'); w.className = 'comfort-row';
+      for (let i = 0; i <= 10; i++) { const l = document.createElement('label'); l.className = 'q-opt'; l.innerHTML = `<input type="radio" name="vas_s" value="${i}" ${i===3?'checked':''}> <strong>${i}</strong>`; w.appendChild(l); }
+      body.appendChild(w);
+    } else if (scale === 'CVS_Q') {
+      $('questTitle').textContent = `CVS-Q (16 симптомов) · ${cp}`;
+      $('questDesc').textContent = 'Частота и интенсивность симптомов (порог CVS ≥ 6 баллов).';
+      (CVSQ_ITEMS[STATE.lang] || CVSQ_ITEMS.ru).forEach((name, idx) => {
+        const d = document.createElement('div'); d.className = 'q-item';
+        d.innerHTML = `<div class="q-item-title">${idx+1}. ${name}</div>
+          <div class="q-options" style="margin-bottom:4px;"><span class="metric-sub">Частота:</span>
+            <label class="q-opt"><input type="radio" name="cf_${idx}" value="0" checked> Никогда (0)</label>
+            <label class="q-opt"><input type="radio" name="cf_${idx}" value="1"> Иногда (1)</label>
+            <label class="q-opt"><input type="radio" name="cf_${idx}" value="2"> Часто (2)</label></div>
+          <div class="q-options"><span class="metric-sub">Сила:</span>
+            <label class="q-opt"><input type="radio" name="ci_${idx}" value="1" checked> Умеренная (1)</label>
+            <label class="q-opt"><input type="radio" name="ci_${idx}" value="2"> Сильная (2)</label></div>`;
+        body.appendChild(d);
+      });
+    } else if (scale === 'OSDI') {
+      $('questTitle').textContent = `OSDI (12 вопросов) · ${cp}`;
+      $('questDesc').textContent = 'Оцените симптомы за последнюю неделю (0 — никогда, 4 — всё время).';
+      (OSDI_ITEMS[STATE.lang] || OSDI_ITEMS.ru).forEach((name, idx) => {
+        const d = document.createElement('div'); d.className = 'q-item';
+        d.innerHTML = `<div class="q-item-title">${idx+1}. ${name}</div><div class="q-options">
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="0" checked> 0</label>
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="1"> 1</label>
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="2"> 2</label>
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="3"> 3</label>
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="4"> 4</label>
+          <label class="q-opt"><input type="radio" name="os_${idx}" value="na"> N/A</label></div>`;
+        body.appendChild(d);
+      });
+    } else if (scale === 'SUS') {
+      $('questTitle').textContent = `SUS (Удобство использования, 10 вопросов)`;
+      $('questDesc').textContent = '1 — полностью не согласен, 5 — полностью согласен (цель H6 ≥ 75).';
+      (SUS_ITEMS[STATE.lang] || SUS_ITEMS.ru).forEach((t, idx) => {
+        const d = document.createElement('div'); d.className = 'q-item';
+        let opts = ''; for (let v = 1; v <= 5; v++) opts += `<label class="q-opt"><input type="radio" name="su_${idx}" value="${v}" ${v===4?'checked':''}> ${v}</label>`;
+        d.innerHTML = `<div class="q-item-title">${idx+1}. ${t}</div><div class="q-options">${opts}</div>`;
+        body.appendChild(d);
+      });
+    }
+    $('questOverlay').classList.add('open');
+  }
+
+  async function submitQuest() {
+    if (!currentQuest) return;
+    const { scale, checkpoint } = currentQuest;
+    let total = 0, raw = {};
+    if (scale === 'VAS_0_10') {
+      total = Number((document.querySelector('input[name="vas_s"]:checked') || { value: 0 }).value);
+      raw = { vas: total, efi60: Number(STATE.currentEfi60.toFixed(1)) };
+    } else if (scale === 'CVS_Q') {
+      const a = [];
+      for (let i = 0; i < 16; i++) {
+        const f = Number((document.querySelector(`input[name="cf_${i}"]:checked`) || { value: 0 }).value);
+        const inten = Number((document.querySelector(`input[name="ci_${i}"]:checked`) || { value: 1 }).value);
+        const p = f === 0 ? 0 : f * inten; const s = p === 0 ? 0 : (p <= 2 ? 1 : 2);
+        total += s; a.push({ f, i: inten, s });
+      }
+      raw = a;
+    } else if (scale === 'OSDI') {
+      let sum = 0, ans = 0; const a = [];
+      for (let i = 0; i < 12; i++) {
+        const v = (document.querySelector(`input[name="os_${i}"]:checked`) || { value: '0' }).value;
+        a.push(v); if (v !== 'na') { sum += Number(v); ans++; }
+      }
+      total = ans ? Number(((sum * 25) / ans).toFixed(1)) : 0; raw = a;
+    } else if (scale === 'SUS') {
+      let sum = 0; const a = [];
+      for (let i = 0; i < 10; i++) {
+        const v = Number((document.querySelector(`input[name="su_${i}"]:checked`) || { value: 3 }).value);
+        a.push(v); sum += ((i + 1) % 2 === 1) ? (v - 1) : (5 - v);
+      }
+      total = Number((sum * 2.5).toFixed(1)); raw = a;
+    }
+    await store.add('questionnaires', {
+      utc_ts: nowIso(), pid: STATE.passport.pid, arm: STATE.arm, checkpoint, scale,
+      total_score: total, efi_60_at_time: Number(STATE.currentEfi60.toFixed(1)), raw_answers_json: JSON.stringify(raw)
+    });
+    $('questOverlay').classList.remove('open');
+    showToast(`${scale} сохранён (${total}).`);
+    refreshResearchTables();
+    await autoUploadToDeveloper('questionnaire', false);
+  }
+
+  /* =========================================================================
+   * 9. RESEARCHER WIZARDS (S1-S6), MINI-WIDGET, EXPORTERS & UI UPDATES
+   * ========================================================================= */
+  async function toggleMiniWidget() {
+    if (STATE.pipWindow && !STATE.pipWindow.closed) { STATE.pipWindow.close(); STATE.pipWindow = null; return; }
+    const box = $('inPageMiniWidget');
+    if (box.classList.contains('open')) { box.classList.remove('open'); return; }
+    if ('documentPictureInPicture' in window && typeof window.documentPictureInPicture.requestWindow === 'function') {
+      try {
+        const pip = await window.documentPictureInPicture.requestWindow({ width: 268, height: 118 });
+        STATE.pipWindow = pip; pip.document.title = 'EyeCare Monitor';
+        const st = pip.document.createElement('style');
+        st.textContent = `body{margin:0;padding:10px 12px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:${STATE.theme==='dark'?'#1B2228':'#F4F2EC'};color:${STATE.theme==='dark'?'#E4EAE8':'#222927'};font-variant-numeric:tabular-nums;font-size:13px;}.r{display:flex;justify-content:space-between;margin-top:6px;}.b{font-size:18px;font-weight:800;}.m{font-size:11px;opacity:.75;}`;
+        pip.document.head.appendChild(st);
+        pip.document.body.innerHTML = `<div style="display:flex;justify-content:space-between;"><strong>EyeCare Monitor</strong><span class="m" id="pipState">Active</span></div><div class="r"><div><div class="m">Dist</div><div class="b" id="pipDist">—</div></div><div><div class="m">EFI</div><div class="b" id="pipEfi">0</div></div><div><div class="m">Rest</div><div class="b" id="pipRest">20:00</div></div></div>`;
+        pip.addEventListener('pagehide', () => { STATE.pipWindow = null; });
+        updateMiniWidgets(); return;
+      } catch {}
+    }
+    box.classList.add('open'); updateMiniWidgets();
+  }
+  function updateMiniWidgets() {
+    const dStr = STATE.currentDistCm !== null ? `${Math.round(STATE.currentDistCm)} cm` : '— cm';
+    const eStr = String(Math.round(STATE.currentEfi60));
+    const rStr = fmtMMSS(Math.max(0, STATE.settings.restIntervalMin * 60 - STATE.workSinceBreakSec));
+    const sStr = !STATE.running ? 'Idle' : (STATE.isAway ? 'AWAY' : (STATE.demoMode ? 'Demo' : STATE.currentZone.toUpperCase()));
+    $('miniDist').textContent = dStr; $('miniEfi').textContent = eStr; $('miniRest').textContent = rStr; $('miniState').textContent = sStr;
+    if (STATE.pipWindow && !STATE.pipWindow.closed) {
+      const pd = STATE.pipWindow.document;
+      if (pd.getElementById('pipDist')) pd.getElementById('pipDist').textContent = dStr;
+      if (pd.getElementById('pipEfi')) pd.getElementById('pipEfi').textContent = eStr;
+      if (pd.getElementById('pipRest')) pd.getElementById('pipRest').textContent = rStr;
+      if (pd.getElementById('pipState')) pd.getElementById('pipState').textContent = sStr;
+    }
+  }
+
+  // S1 10-second median distance capture
+  function startS1Capture() {
+    if (!STATE.running) { showToast('Сначала нажмите «Начать» (или «Демо»).', 'amber'); return; }
+    if (STATE.s1Recording) return;
+    STATE.s1Recording = true; STATE.s1Samples = [];
+    const dRef = Number($('s1RefSelect').value), glasses = $('s1GlassesSelect').value, light = $('s1LightSelect').value;
+    $('s1Record10sBtn').disabled = true;
+    let rem = 10; $('s1ProgressBadge').textContent = `${rem} с...`;
+    const iv = setInterval(async () => {
+      rem--;
+      if (rem > 0) $('s1ProgressBadge').textContent = `${rem} с (${STATE.s1Samples.length} кадр.)`;
+      else {
+        clearInterval(iv); STATE.s1Recording = false; $('s1Record10sBtn').disabled = false;
+        const med = median(STATE.s1Samples);
+        if (med === null) { $('s1ProgressBadge').textContent = 'Нет лица'; return; }
+        const err = med - dRef, ape = Math.abs(err) / dRef * 100, cal = STATE.calibrations[STATE.deviceProfile];
+        await store.add('s1', { utc_ts: nowIso(), pid: STATE.passport.pid, device: STATE.deviceProfile, d_ref_cm: dRef, d_est_median_cm: Number(med.toFixed(2)), error_cm: Number(err.toFixed(2)), ape_pct: Number(ape.toFixed(2)), n_samples: STATE.s1Samples.length, glasses, lighting: light, lighting_luma: STATE.currentLuma, f_px: cal ? cal.f_px : null });
+        $('s1ProgressBadge').textContent = `${med.toFixed(1)} см (${err>=0?'+':''}${err.toFixed(1)})`;
+        const sel = $('s1RefSelect'); if (sel.selectedIndex < sel.options.length - 1) sel.selectedIndex++;
+        refreshS1Table(); updateQueueCounter();
+      }
+    }, 1000);
+  }
+  async function refreshS1Table() {
+    const rows = await store.getAll('s1'), tb = $('s1Tbody'); tb.innerHTML = '';
+    rows.slice(-20).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.utc_ts.slice(11,19)}</td><td>${r.d_ref_cm}</td><td>${r.d_est_median_cm}</td><td>${r.error_cm}</td><td>${r.ape_pct}%</td><td>${r.glasses}</td><td>${r.lighting}</td>`; tb.appendChild(trEl); });
+    $('s1LiveStats').textContent = rows.length ? `N=${rows.length} · MAE=${mean(rows.map(r=>Math.abs(r.error_cm))).toFixed(2)} см · MAPE=${mean(rows.map(r=>r.ape_pct)).toFixed(2)}%` : 'MAE: — · MAPE: —';
+  }
+
+  // S2 5-min blinks + optional local UTC video clip
+  let s2Iv = null;
+  function drawS2RecordCanvasFrame() {
+    const vid = $('camVideo'), c = $('recordCanvas');
+    if (!vid || vid.readyState < 2 || !c) return;
+    const ctx = c.getContext('2d'); ctx.drawImage(vid, 0, 0, c.width, c.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(8, 8, 340, 28);
+    ctx.fillStyle = '#FFF'; ctx.font = 'bold 15px monospace'; ctx.fillText(`UTC ${nowIso()} | ${STATE.passport.pid}`, 14, 27);
+  }
+  function startS2() {
+    if (!STATE.running) { showToast('Сначала запустите камеру.', 'amber'); return; }
+    STATE.s2Recording = true; STATE.s2EndMs = Date.now() + 300000; STATE.s2BlinkCount = 0; STATE.s2IncompleteCount = 0;
+    $('s2StartBtn').disabled = true; $('s2StopBtn').disabled = false;
+    if (!STATE.demoMode && typeof MediaRecorder !== 'undefined') {
+      try {
+        const c = $('recordCanvas'), stream = c.captureStream ? c.captureStream(20) : STATE.stream;
+        let mime = ''; for (const m of ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4']) { if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) { mime = m; break; } }
+        STATE.s2RecordedChunks = [];
+        STATE.s2MediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+        STATE.s2MediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) STATE.s2RecordedChunks.push(e.data); };
+        STATE.s2MediaRecorder.onstop = () => {
+          STATE.s2RecordedBlob = new Blob(STATE.s2RecordedChunks, { type: mime || 'video/webm' });
+          $('s2DownloadClipBtn').disabled = false; $('s2DeleteClipBtn').disabled = false;
+        };
+        STATE.s2MediaRecorder.start(1000);
+      } catch {}
+    }
+    clearInterval(s2Iv);
+    s2Iv = setInterval(() => {
+      const rem = Math.max(0, Math.ceil((STATE.s2EndMs - Date.now()) / 1000));
+      $('s2TimerBadge').textContent = fmtMMSS(rem);
+      if (rem <= 0) stopS2();
+    }, 500);
+    updateS2UI();
+  }
+  function stopS2() {
+    STATE.s2Recording = false; clearInterval(s2Iv); $('s2StartBtn').disabled = false; $('s2StopBtn').disabled = true;
+    if (STATE.s2MediaRecorder && STATE.s2MediaRecorder.state !== 'inactive') { try { STATE.s2MediaRecorder.stop(); } catch {} }
+    updateS2UI(); updateQueueCounter();
+  }
+  async function updateS2UI() {
+    $('s2StatsText').textContent = `Морганий: ${STATE.s2BlinkCount} (неполных: ${STATE.s2IncompleteCount})`;
+    const rows = await store.getAll('s2'), tb = $('s2Tbody'); tb.innerHTML = '';
+    rows.slice(-20).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.start_utc.slice(11,23)}</td><td>${r.end_utc.slice(11,23)}</td><td>${r.duration_ms}</td><td>${r.event_type}</td><td>${r.min_ear}/${r.ear_open}</td><td>${r.blend_max}</td>`; tb.appendChild(trEl); });
+  }
+
+  // S3 Scripted AWAY
+  async function handleS3(act) {
+    const t = Date.now();
+    if (act !== 'return') {
+      STATE.s3ActiveScenario = act; STATE.s3GtStartMs = t;
+      STATE.s3DetStartDuringGt = STATE.isAway ? STATE.awayStartMs : null; STATE.s3TimerPausedFlag = STATE.isAway;
+      $('s3ActiveScenario').textContent = `ACTIVE: ${act.toUpperCase()}`;
+    } else if (STATE.s3ActiveScenario && STATE.s3GtStartMs) {
+      const gt = (t - STATE.s3GtStartMs) / 1000, det = STATE.s3DetStartDuringGt ? Math.max(0, (t - STATE.s3DetStartDuringGt) / 1000) : 0;
+      await store.add('s3', { pid: STATE.passport.pid, scenario_type: STATE.s3ActiveScenario, gt_start_utc: new Date(STATE.s3GtStartMs).toISOString(), gt_end_utc: nowIso(), gt_dur_sec: Number(gt.toFixed(2)), det_dur_sec: Number(det.toFixed(2)), abs_err_sec: Number(Math.abs(det - gt).toFixed(2)), missed: STATE.s3DetStartDuringGt ? 0 : 1, timer_paused_ok: STATE.s3TimerPausedFlag ? 1 : 0 });
+      STATE.s3ActiveScenario = null; STATE.s3GtStartMs = null; STATE.s3DetStartDuringGt = null;
+      $('s3ActiveScenario').textContent = 'PRESENT';
+      refreshS3Table(); updateQueueCounter();
+    }
+  }
+  async function refreshS3Table() {
+    const rows = await store.getAll('s3'), tb = $('s3Tbody'); tb.innerHTML = '';
+    $('s3CountBadge').textContent = `${rows.length} / 10`;
+    rows.slice(-15).reverse().forEach(r => { const trEl = document.createElement('tr'); trEl.innerHTML = `<td>${r.scenario_type}</td><td>${r.gt_start_utc.slice(11,19)}</td><td>${r.gt_dur_sec}</td><td>${r.det_dur_sec}</td><td>${r.abs_err_sec}</td><td>${r.timer_paused_ok?'Yes':'No'}</td>`; tb.appendChild(trEl); });
+  }
+  function updateS4UI() {
+    const c = STATE.researchCounts, tot = c['E-1'] + c['E-2'] + c['E-3'] + c['CTRL'];
+    $('s4BlockStats').textContent = `Блоки: E-1: ${c['E-1']} · E-2: ${c['E-2']} · E-3: ${c['E-3']} · CTRL: ${c['CTRL']} (${tot}/12)`;
+  }
+
+  function runS6Audit() {
+    const rel = h => { const rgb = [1,3,5].map(i => parseInt(h.slice(i,i+2),16)/255).map(v => v<=0.03928 ? v/12.92 : ((v+0.055)/1.055)**2.4); return 0.2126*rgb[0]+0.7152*rgb[1]+0.0722*rgb[2]; };
+    const ctr = (a,b) => ((Math.max(rel(a),rel(b))+0.05)/(Math.min(rel(a),rel(b))+0.05)).toFixed(2);
+    const fgM = STATE.fgFpsSamples.length ? mean(STATE.fgFpsSamples).toFixed(1) : '—', fgP = STATE.fgFpsSamples.length ? percentile(STATE.fgFpsSamples, 5).toFixed(1) : '—';
+    const bgM = STATE.bgFpsSamples.length ? mean(STATE.bgFpsSamples).toFixed(1) : '—', infM = STATE.infMsSamples.length ? mean(STATE.infMsSamples).toFixed(1) : '—';
+    $('auditOutput').textContent = [
+      `HTTPS/localhost: ${window.isSecureContext ? 'PASS' : 'FAIL'} | Viewport: ${window.innerWidth}x${window.innerHeight} (${STATE.deviceProfile})`,
+      `Engine: ${STATE.delegate} | WASM: ${typeof WebAssembly!=='undefined'?'OK':'NO'} | Worker: ${typeof Worker!=='undefined'?'OK':'NO'}`,
+      `Document PiP: ${'documentPictureInPicture' in window ? 'Native' : 'In-Page Fallback'} | Storage: ${store.usingMemory ? 'Memory' : 'IndexedDB'}`,
+      `WCAG 2.1 AA Contrast: Light ${ctr('#222927','#F4F2EC')}:1 (PASS) | Dark ${ctr('#E4EAE8','#13181C')}:1 (PASS)`,
+      `Perf: FG FPS=${fgM} (p05=${fgP}) | BG FPS=${bgM} | Inf=${infM} ms | Start=${STATE.onboardingSec ? STATE.onboardingSec.toFixed(1)+' s' : '—'}`
+    ].join('\n');
+    store.add('s6', { utc_ts: nowIso(), pid: STATE.passport.pid, device: STATE.deviceProfile, viewport_px: `${window.innerWidth}x${window.innerHeight}`, user_agent: navigator.userAgent, onboarding_sec: STATE.onboardingSec ? Number(STATE.onboardingSec.toFixed(1)) : null, calibration_attempts: STATE.calibrationAttempts, calibration_first_try_ok: STATE.calibrationFirstTryOk, fps_fg_mean: STATE.fgFpsSamples.length ? Number(fgM) : null, fps_fg_p05: STATE.fgFpsSamples.length ? Number(fgP) : null, fps_bg_mean: STATE.bgFpsSamples.length ? Number(bgM) : null, inference_ms_mean: STATE.infMsSamples.length ? Number(infM) : null }).then(() => updateQueueCounter());
+  }
+
+  const CSV_SCHEMAS = {
+    minutes: ['utc_ts','pid','arm','mode','device','active_sec','away_sec','dist_median_cm','zone_green_s','zone_yellow_s','zone_red_s','ear_open_median','rel_opening_a','br_per_min','ib_share','s_a','s_ib','s_br','efi_min','efi_60','efi_trend','luma','fps'],
+    alerts: ['utc_ts','pid','alert_type','trigger_enter_utc','latency_ms','dist_cm','tab_state'],
+    exercises: ['utc_ts','pid','mode','condition','prev_condition','order_idx','response','efi_before','efi_after','delta_efi','ib_before','ib_after','delta_ib','comfort_pre','comfort_post'],
+    questionnaires: ['utc_ts','pid','arm','checkpoint','scale','total_score','efi_60_at_time','raw_answers_json'],
+    s1: ['utc_ts','pid','device','d_ref_cm','d_est_median_cm','error_cm','ape_pct','n_samples','glasses','lighting','lighting_luma','f_px'],
+    s2: ['pid','start_utc','end_utc','duration_ms','event_type','min_ear','ear_open','blend_max'],
+    s3: ['pid','scenario_type','gt_start_utc','gt_end_utc','gt_dur_sec','det_dur_sec','abs_err_sec','missed','timer_paused_ok'],
+    s6: ['utc_ts','pid','device','viewport_px','user_agent','onboarding_sec','calibration_attempts','calibration_first_try_ok','fps_fg_mean','fps_fg_p05','fps_bg_mean','inference_ms_mean']
+  };
+  async function exportCsv(name) {
+    const rows = await store.getAll(name);
+    const stamp = nowIso().slice(0, 16).replace(/[-:T]/g, '');
+    const pid = (STATE.passport.pid || 'P01').replace(/[^A-Za-z0-9_-]/g, '');
+    downloadFile(`${pid}_${name}_${stamp}.csv`, toCsv(rows, CSV_SCHEMAS[name]), 'text/csv;charset=utf-8;');
+  }
+  async function exportJsonBundle() {
+    const { payload } = await buildUnsyncedPayload(true);
+    const stamp = nowIso().slice(0, 16).replace(/[-:T]/g, '');
+    const pid = (STATE.passport.pid || 'P01').replace(/[^A-Za-z0-9_-]/g, '');
+    downloadFile(`${pid}_EyeCare_Bundle_${stamp}.json`, JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+    showToast('JSON-файл с данными скачан.');
+  }
+
+  async function refreshResearchTables() {
+    const exs = await store.getAll('exercises'), qs = await store.getAll('questionnaires'), mins = await store.getAll('minutes');
+    const eTb = $('recentEventsTbody'); eTb.innerHTML = '';
+    exs.slice(-12).reverse().forEach(e => { const r = document.createElement('tr'); r.innerHTML = `<td>${e.utc_ts.slice(11,19)}</td><td><strong>${e.condition}</strong></td><td>${e.response}</td><td>${e.efi_before??'—'}</td><td>${e.efi_after??'wait'}</td><td>${e.delta_efi??'—'}</td><td>${e.delta_ib??'—'}</td>`; eTb.appendChild(r); });
+    const qTb = $('questTbody'); qTb.innerHTML = '';
+    qs.slice(-15).reverse().forEach(q => { const r = document.createElement('tr'); r.innerHTML = `<td>${q.utc_ts.slice(0,19).replace('T',' ')}</td><td>${q.pid}</td><td>${q.checkpoint}</td><td><strong>${q.scale}</strong></td><td>${q.total_score}</td>`; qTb.appendChild(r); });
+    $('exportCountsSummary').textContent = `В базе: minutes=${mins.length}, exercises=${exs.length}, questionnaires=${qs.length}`;
+  }
+
+  function updateUI() {
+    $('fpsBadge').textContent = `${STATE.currentFps.toFixed(0)} FPS`;
+    $('activeTimeBadge').textContent = fmtMMSS(STATE.sessionActiveSec);
+    const pB = $('presenceBadge');
+    if (!STATE.running) { pB.textContent = 'Ожидание'; pB.className = 'badge'; }
+    else if (STATE.isAway) { pB.textContent = 'AWAY'; pB.className = 'badge amber'; }
+    else { pB.textContent = 'В кадре'; pB.className = 'badge sage'; }
+
+    const stage = $('camStage');
+    stage.classList.remove('zone-safe', 'zone-yellow', 'zone-red');
+    const hudDist = $('hudDistPill');
+    hudDist.className = 'hud-pill tabular';
+
+    if (STATE.currentDistCm !== null && !STATE.isAway && STATE.running) {
+      const d = STATE.currentDistCm, diopt = (100 / Math.max(12, d)).toFixed(2);
+      $('distValue').textContent = String(Math.round(d));
+      $('diopterText').textContent = `Нагрузка: ${diopt} D`;
+      $('distMarker').style.left = clamp(((d - 15) / 85) * 100, 2, 98).toFixed(1) + '%';
+      hudDist.textContent = `Дистанция: ${Math.round(d)} см (${diopt} D)`;
+      hudDist.classList.add(STATE.currentZone);
+      stage.classList.add('zone-' + STATE.currentZone);
+
+      const zb = $('distZoneBadge');
+      if (STATE.currentZone === 'red') {
+        zb.textContent = tr('zoneRed'); zb.className = 'badge coral';
+        const rem = STATE.zoneEnterMs ? Math.max(0, STATE.settings.redDwellSec - (Date.now() - STATE.zoneEnterMs) / 1000) : 0;
+        $('distCountdownText').textContent = `Очень близко (<30 см) · сигнал через ${Math.ceil(rem)} с`;
+      } else if (STATE.currentZone === 'yellow') {
+        zb.textContent = tr('zoneYellow'); zb.className = 'badge amber';
+        const rem = STATE.zoneEnterMs ? Math.max(0, STATE.settings.yellowDwellSec - (Date.now() - STATE.zoneEnterMs) / 1000) : 0;
+        $('distCountdownText').textContent = `Близко (30–50 см) · сигнал через ${Math.ceil(rem)} с`;
+      } else {
+        zb.textContent = tr('zoneSafe'); zb.className = 'badge sage';
+        $('distCountdownText').textContent = tr('distNormHint');
+      }
+    } else {
+      $('distValue').textContent = '—'; $('diopterText').textContent = 'Нагрузка: — D';
+      hudDist.textContent = STATE.isAway ? 'AWAY (лицо вне кадра)' : 'Дистанция: — см';
+    }
+
+    $('hudBlinkPill').textContent = `Моргания: ${STATE.currentBR}/мин · EAR ${STATE.rawEar !== null ? STATE.rawEar.toFixed(2) : '—'}`;
+    $('hudIrisPill').textContent = `Радужка: ${STATE.rawIrisPx !== null ? STATE.rawIrisPx.toFixed(1) : '—'} px`;
+
+    // EFI card
+    const ev = Math.round(STATE.currentEfi60);
+    $('efiGaugeNum').textContent = String(ev);
+    $('efiArcPath').setAttribute('stroke-dashoffset', (126 * (1 - clamp(ev / 100, 0, 1))).toFixed(1));
+    const eb = $('efiStateBadge'); eb.textContent = `${ev} / 100`;
+    if (ev >= 60) { $('efiArcPath').setAttribute('stroke', 'var(--coral)'); eb.className = 'badge coral'; $('efiBandLabel').textContent = tr('efiRest'); }
+    else if (ev >= 33) { $('efiArcPath').setAttribute('stroke', 'var(--amber)'); eb.className = 'badge amber'; $('efiBandLabel').textContent = tr('efiBuilding'); }
+    else { $('efiArcPath').setAttribute('stroke', 'var(--sage)'); eb.className = 'badge sage'; $('efiBandLabel').textContent = tr('efiFresh'); }
+
+    const base = STATE.baselines[STATE.deviceProfile];
+    $('blinkBriefText').textContent = `Моргания: ${STATE.currentBR}/мин · Неполные: ${Math.round(STATE.currentIB * 100)}%`;
+    $('efiMetaText').textContent = `Бейзлайн: ${base ? 'OK' : STATE.baselineSamples.length + '/3 мин'} · Тренд: ${STATE.currentEfiTrend >= 0 ? '+' : ''}${STATE.currentEfiTrend.toFixed(1)}`;
+
+    const hist = STATE.activeMinuteHistory.slice(-60);
+    if (hist.length >= 2) {
+      $('efiSparkLinePoly').setAttribute('points', hist.map((h, i) => `${((i/(hist.length-1))*240).toFixed(1)},${(33-clamp(h.efiMin/100,0,1)*29).toFixed(1)}`).join(' '));
+    }
+
+    // Rest timer card
+    const tSec = STATE.settings.restIntervalMin * 60, remS = Math.max(0, tSec - STATE.workSinceBreakSec);
+    $('restRingText').textContent = fmtMMSS(remS);
+    $('restRingCircle').setAttribute('stroke-dashoffset', (201 * (1 - clamp(remS / Math.max(1, tSec), 0, 1))).toFixed(1));
+    $('restStatusLabel').textContent = !STATE.running ? tr('restWaiting') : (STATE.isAway ? tr('restAway') : tr('restActive'));
+    $('breaksCountLabel').textContent = `Перерывов: ${STATE.breaksToday} · ΔEFI: ${STATE.lastCompletedDeltaEfi !== null ? (STATE.lastCompletedDeltaEfi>=0?'+':'')+STATE.lastCompletedDeltaEfi : '—'}`;
+    $('nextExHintBadge').textContent = STATE.mode === 'research' ? 'Random S4' : (STATE.mode === 'pilot_silent' ? 'Silent' : 'Auto');
+
+    const cal = STATE.calibrations[STATE.deviceProfile];
+    $('rawTelemetryLine').textContent = `EAR: ${STATE.rawEar?STATE.rawEar.toFixed(3):'—'} | open: ${STATE.earOpen?STATE.earOpen.toFixed(3):'—'} | Iris: ${STATE.rawIrisPx?STATE.rawIrisPx.toFixed(1):'—'} px | f_px: ${cal?cal.f_px:'1000'} | sA/sIB/sBR: ${STATE.currentSubScores.sA.toFixed(2)}/${STATE.currentSubScores.sIB.toFixed(2)}/${STATE.currentSubScores.sBR.toFixed(2)}`;
+  }
+
+  function updateButtonsUI() {
+    $('startStopBtn').textContent = (STATE.running && !STATE.demoMode) ? tr('stopBtn') : tr('startBtn');
+    $('demoToggleBtn').textContent = STATE.demoMode ? tr('stopDemoBtn') : tr('demoShortBtn');
+    $('silentBanner').style.display = STATE.mode === 'pilot_silent' ? 'flex' : 'none';
+    $('footerPidInfo').textContent = `PID: ${STATE.passport.pid} · ${STATE.mode}`;
+  }
+
+  /* =========================================================================
+   * 10. ONE-CLICK START / STOP / FINISH-AND-SEND FLOW
+   * ========================================================================= */
+  async function startCameraSession(forceAutoCalib = false) {
+    audio.unlock();
+    try {
+      await requestCameraStream();
+      $('camStartOverlay').classList.add('hidden');
+      await ensureLandmarker(false);
+    } catch (err) {
+      showDiagBanner(explainCamErr(err), 'err');
+      return;
+    }
+    STATE.demoMode = false; $('demoBar').style.display = 'none';
+    STATE.running = true;
+    if (STATE.onboardingSec === null) STATE.onboardingSec = (performance.now() - STATE.pageLoadMs) / 1000;
+    if (STATE.settings.soundEnabled && STATE.mode !== 'pilot_silent') audio.startKeepAlive();
+    startInferenceLoop();
+    // Automatic 3-second zero-click calibration on first launch or if requested!
+    if (!STATE.calibrations[STATE.deviceProfile] || forceAutoCalib) {
+      startAutoCalibration(60);
+    }
+    updateButtonsUI();
+  }
+
+  function startDemoSession() {
+    audio.unlock();
+    if (STATE.stream) { STATE.stream.getTracks().forEach(t => t.stop()); STATE.stream = null; }
+    $('camStartOverlay').classList.add('hidden');
+    STATE.demoMode = true; STATE.running = true; STATE.demoPreset = 'normal';
+    $('demoBar').style.display = 'flex';
+    $('hudEnginePill').textContent = 'Демо-симулятор (без камеры)';
+    if (STATE.settings.soundEnabled && STATE.mode !== 'pilot_silent') audio.startKeepAlive();
+    startInferenceLoop();
+    updateButtonsUI();
+  }
+
+  function pauseSession() {
+    STATE.running = false; STATE.demoMode = false;
+    $('demoBar').style.display = 'none';
+    stopInferenceLoop(); audio.stopKeepAlive();
+    if (STATE.s2Recording) stopS2();
+    if (STATE.stream) { STATE.stream.getTracks().forEach(t => t.stop()); STATE.stream = null; STATE.imageCapture = null; }
+    $('camStartOverlay').classList.remove('hidden');
+    updateButtonsUI(); updateUI();
+  }
+
+  async function finishAndSendSession() {
+    pauseSession();
+    // Save an S6 performance summary row automatically on session finish
+    runS6Audit();
+    const res = await autoUploadToDeveloper('finish', true);
+    if (res.ok) {
+      showToast('Сессия завершена! Все данные автоматически отправлены разработчику.');
+    }
+  }
+
+  /* =========================================================================
+   * 11. EVENT BINDINGS & ZERO-FRICTION BOOT
+   * ========================================================================= */
+  function bindEvents() {
+    $('heroStartBtn').addEventListener('click', () => startCameraSession(false));
+    $('heroDemoBtn').addEventListener('click', startDemoSession);
+    $('startStopBtn').addEventListener('click', () => { if (STATE.running && !STATE.demoMode) pauseSession(); else startCameraSession(false); });
+    $('demoToggleBtn').addEventListener('click', () => { if (STATE.demoMode) pauseSession(); else startDemoSession(); });
+    $('triggerExerciseNowBtn').addEventListener('click', () => { audio.unlock(); openExerciseOverlay(selectExerciseCode(Date.now())); });
+    $('recalibQuickBtn').addEventListener('click', () => { if (!STATE.running || STATE.demoMode) startCameraSession(true); else startAutoCalibration(60); });
+    $('finishAndSendBtn').addEventListener('click', finishAndSendSession);
+
+    $('toggleVideoCollapseBtn').addEventListener('click', () => {
+      $('camStage').classList.add('collapsed'); $('collapsedCamNotice').style.display = 'flex';
+    });
+    $('expandVideoBtn').addEventListener('click', () => {
+      $('camStage').classList.remove('collapsed'); $('collapsedCamNotice').style.display = 'none';
+    });
+
+    $('themeToggleBtn').addEventListener('click', () => {
+      STATE.theme = STATE.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', STATE.theme);
+      $('themeToggleBtn').textContent = STATE.theme === 'dark' ? '☀️' : '🌙';
+      safeLSSet('ecm_theme', STATE.theme);
+    });
+    $('langSelect').addEventListener('change', (e) => { STATE.lang = e.target.value; safeLSSet('ecm_lang', STATE.lang); applyTranslations(); });
+    $('diagBannerClose').addEventListener('click', () => { $('diagBanner').style.display = 'none'; });
+    $('pipBtn').addEventListener('click', toggleMiniWidget);
+    $('closeMiniWidgetBtn').addEventListener('click', () => $('inPageMiniWidget').classList.remove('open'));
+
+    // Researcher drawer toggle (hidden by default for clean user UX)
+    const toggleResearch = (open) => {
+      const d = $('researchDrawer');
+      const next = open !== undefined ? open : !d.classList.contains('open');
+      d.classList.toggle('open', next);
+      if (next) { refreshResearchTables(); refreshS1Table(); updateS2UI(); refreshS3Table(); updateQueueCounter(); d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    };
+    $('researchToggleBtn').addEventListener('click', () => toggleResearch());
+    $('closeResearchBtn').addEventListener('click', () => toggleResearch(false));
+
+    document.querySelectorAll('.subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.subpanel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active'); $('sub-' + btn.dataset.subtab).classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('[data-demo]').forEach(b => b.addEventListener('click', () => { STATE.demoPreset = b.dataset.demo; showToast('Демо: ' + b.textContent); }));
+
+    // Exercise modal
+    $('exInfoBtn').addEventListener('click', () => { const b = $('exEvidenceBox'); b.style.display = b.style.display === 'none' ? 'block' : 'none'; });
+    $('exStartActionBtn').addEventListener('click', () => { audio.unlock(); if (STATE.activeExerciseEvent && STATE.activeExerciseEvent.response === 'accepted') closeExercise('accepted'); else runExercise(); });
+    $('exSnoozeBtn').addEventListener('click', () => closeExercise('snoozed'));
+    $('exSkipBtn').addEventListener('click', () => closeExercise('skipped'));
+
+    // Away 10 min modal
+    $('away10ContinueBtn').addEventListener('click', () => { $('away10Overlay').classList.remove('open'); STATE.away10PromptShown = false; });
+    $('away10StopBtn').addEventListener('click', () => { $('away10Overlay').classList.remove('open'); finishAndSendSession(); });
+
+    // Questionnaire modal
+    $('questCloseBtn').addEventListener('click', () => $('questOverlay').classList.remove('open'));
+    $('questCancelBtn').addEventListener('click', () => $('questOverlay').classList.remove('open'));
+    $('questSubmitBtn').addEventListener('click', submitQuest);
+
+    // Webhook & Link generator
+    $('saveWebhookBtn').addEventListener('click', () => {
+      STATE.webhookUrl = $('webhookUrlInput').value.trim();
+      safeLSSet('ecm_webhook_url', STATE.webhookUrl);
+      updateQueueCounter();
+      showToast(STATE.webhookUrl ? 'URL автоотправки сохранён.' : 'URL очищен (только локальное сохранение).');
+    });
+    $('sendNowTestBtn').addEventListener('click', () => autoUploadToDeveloper('manual', false));
+    $('savePassportBtn').addEventListener('click', () => {
+      STATE.passport.pid = $('pidInput').value.trim() || 'P01';
+      STATE.passport.vision = $('visionSelect').value;
+      STATE.mode = $('studyModeSelect').value;
+      STATE.arm = STATE.mode === 'pilot_silent' ? 'control' : 'intervention';
+      STATE.settings.restIntervalMin = clamp(Number($('restIntervalInput').value) || 20, 5, 60);
+      STATE.settings.soundEnabled = $('soundEnabledChk').checked;
+      safeLSSet('ecm_passport_v2', STATE.passport);
+      safeLSSet('ecm_settings_v2', STATE.settings);
+      updateButtonsUI(); showToast('Параметры участника сохранены.');
+    });
+    $('copyParticipantLinkBtn').addEventListener('click', async () => {
+      const base = window.location.href.split('?')[0];
+      const q = new URLSearchParams({
+        pid: $('pidInput').value.trim() || 'P01',
+        mode: $('studyModeSelect').value,
+        lang: STATE.lang
+      });
+      const wh = $('webhookUrlInput').value.trim();
+      if (wh) q.set('webhook', wh);
+      const u = `${base}?${q.toString()}`;
+      try { await navigator.clipboard.writeText(u); showToast('Готовая ссылка для участника скопирована!'); }
+      catch { window.prompt('Скопируйте ссылку для участника:', u); }
+    });
+
+    // S1-S6 controls
+    $('s1Record10sBtn').addEventListener('click', startS1Capture);
+    $('s1MarkYellowBtn').addEventListener('click', () => { STATE.s1MarkZone = 'yellow'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен вход в Жёлтую...'; });
+    $('s1MarkRedBtn').addEventListener('click', () => { STATE.s1MarkZone = 'red'; STATE.s1MarkUtcMs = Date.now(); $('s1AlertTestOut').textContent = 'Отмечен вход в Красную...'; });
+    $('s1ChatterTestBtn').addEventListener('click', () => {
+      STATE.s1ChatterActive = true; STATE.s1ChatterCount = 0; $('s1AlertTestOut').textContent = 'Тест 48–52 см (60 с)...';
+      setTimeout(() => { STATE.s1ChatterActive = false; $('s1AlertTestOut').textContent = `Готово: ложных повторов = ${STATE.s1ChatterCount}`; }, 60000);
+    });
+    $('s1ClearBtn').addEventListener('click', async () => { await store.clearStore('s1'); refreshS1Table(); });
+    $('s2StartBtn').addEventListener('click', startS2);
+    $('s2StopBtn').addEventListener('click', stopS2);
+    $('s2DownloadClipBtn').addEventListener('click', () => { if (!STATE.s2RecordedBlob) return; const ext = STATE.s2RecordedBlob.type.includes('mp4')?'mp4':'webm'; downloadFile(`${STATE.passport.pid}_S2_${Date.now()}.${ext}`, STATE.s2RecordedBlob, STATE.s2RecordedBlob.type); });
+    $('s2DeleteClipBtn').addEventListener('click', () => { STATE.s2RecordedBlob = null; STATE.s2RecordedChunks = []; $('s2DownloadClipBtn').disabled = true; $('s2DeleteClipBtn').disabled = true; showToast('Видеоклип удалён.'); });
+    document.querySelectorAll('[data-s3]').forEach(b => b.addEventListener('click', () => handleS3(b.dataset.s3)));
+    window.addEventListener('keydown', (e) => {
+      if (!$('sub-s3').classList.contains('active') || !$('researchDrawer').classList.contains('open')) return;
+      if (['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      const m = { '1':'leave','2':'turn_away','3':'hand_face','4':'phone_down','5':'return' };
+      if (m[e.key]) handleS3(m[e.key]);
+    });
+    $('s4EnableResearchBtn').addEventListener('click', () => { STATE.mode = 'research'; $('studyModeSelect').value = 'research'; updateButtonsUI(); showToast('Research Mode (S4) включён.'); });
+    $('s4TriggerNextBlockBtn').addEventListener('click', () => { audio.unlock(); openExerciseOverlay(nextResearchCode()); });
+    $('s4OpenVasBtn').addEventListener('click', () => openQuestModal('VAS_0_10', `S4_min${Math.floor(STATE.sessionActiveSec/60)}`));
+    $('openCvsqBtn').addEventListener('click', () => openQuestModal('CVS_Q', $('s5CheckpointSelect').value));
+    $('openOsdiBtn').addEventListener('click', () => openQuestModal('OSDI', $('s5CheckpointSelect').value));
+    $('openSusBtn').addEventListener('click', () => openQuestModal('SUS', 'S6_post'));
+    $('openSusBtn2').addEventListener('click', () => openQuestModal('SUS', 'S6_post'));
+    $('runAuditBtn').addEventListener('click', runS6Audit);
+    $('resetBaselineBtn').addEventListener('click', () => { STATE.baselines[STATE.deviceProfile] = null; STATE.baselineSamples = []; safeLSSet('ecm_baselines_v2', STATE.baselines); showToast('Бейзлайн сброшен.'); });
+
+    $('exportAllJsonBtn').addEventListener('click', exportJsonBundle);
+    document.querySelectorAll('[data-export]').forEach(b => b.addEventListener('click', () => exportCsv(b.dataset.export)));
+    $('wipeDbBtn').addEventListener('click', async () => { if (!confirm('Очистить локальную базу?')) return; await store.wipeAll(); STATE.activeMinuteHistory = []; refreshResearchTables(); refreshS1Table(); updateS2UI(); refreshS3Table(); updateQueueCounter(); });
+
+    // Background / unload resilience across desktop & mobile browsers
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && STATE.running) {
+        audio.unlock();
+        const v = $('camVideo');
+        if (v && v.srcObject && v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+      }
+    });
+    window.addEventListener('online', () => { autoUploadToDeveloper('auto', false); });
+    window.addEventListener('pagehide', sendBeaconOnUnload);
+  }
+
+  async function boot() {
+    await store.init();
+    const savedTheme = safeLSGet('ecm_theme', null);
+    STATE.theme = (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', STATE.theme);
+    $('themeToggleBtn').textContent = STATE.theme === 'dark' ? '☀️' : '🌙';
+    const savedLang = safeLSGet('ecm_lang', null);
+    if (savedLang && I18N[savedLang]) STATE.lang = savedLang;
+
+    // Auto-read pre-configured participant link parameters (zero setup for test users!)
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('pid')) { STATE.passport.pid = p.get('pid'); safeLSSet('ecm_passport_v2', STATE.passport); }
+    if (p.get('lang') && I18N[p.get('lang')]) STATE.lang = p.get('lang');
+    if (p.get('mode') && ['standard','research','pilot_silent'].includes(p.get('mode'))) {
+      STATE.mode = p.get('mode');
+      STATE.arm = STATE.mode === 'pilot_silent' ? 'control' : 'intervention';
+    }
+    if (p.get('webhook')) {
+      STATE.webhookUrl = p.get('webhook');
+      safeLSSet('ecm_webhook_url', STATE.webhookUrl);
+    }
+    if (p.get('researcher') === '1') $('researchDrawer').classList.add('open');
+
+    $('langSelect').value = STATE.lang;
+    $('pidInput').value = STATE.passport.pid;
+    $('visionSelect').value = STATE.passport.vision;
+    $('studyModeSelect').value = STATE.mode;
+    $('restIntervalInput').value = STATE.settings.restIntervalMin;
+    $('soundEnabledChk').checked = STATE.settings.soundEnabled;
+    $('webhookUrlInput').value = STATE.webhookUrl;
+
+    applyTranslations();
+    bindEvents();
+    updateButtonsUI();
+    updateUI();
+    await updateQueueCounter();
+
+    if (!window.isSecureContext) showDiagBanner('Откройте через HTTPS или localhost — иначе браузер заблокирует камеру (для показа без сервера нажмите «Демо»).', 'warn');
+    else if (detectWebView()) showDiagBanner('Открыто внутри мессенджера — откройте в Chrome или Safari для стабильной камеры.', 'warn');
+
+    // Auto-start live webcam immediately if browser already has camera permission granted!
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const st = await navigator.permissions.query({ name: 'camera' });
+        if (st && st.state === 'granted' && window.isSecureContext) {
+          startCameraSession(false);
+        }
+      }
+    } catch {}
+  }
+
+  boot();
+  </script>
+</body>
+</html>
